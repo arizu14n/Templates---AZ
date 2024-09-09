@@ -1,0 +1,312 @@
+USE [master]
+GO
+/****** Object:  Database [pedidos]    Script Date: 05/08/2024 18:18:46 ******/
+CREATE DATABASE [pedidos]
+ CONTAINMENT = NONE
+ ON  PRIMARY 
+( NAME = N'pedidos', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL11.SQLEXPRESS\MSSQL\DATA\pedidos.mdf' , SIZE = 5120KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB )
+ LOG ON 
+( NAME = N'pedidos_log', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL11.SQLEXPRESS\MSSQL\DATA\pedidos_log.ldf' , SIZE = 1024KB , MAXSIZE = 2048GB , FILEGROWTH = 10%)
+GO
+ALTER DATABASE [pedidos] SET COMPATIBILITY_LEVEL = 110
+GO
+IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
+begin
+EXEC [pedidos].[dbo].[sp_fulltext_database] @action = 'enable'
+end
+GO
+ALTER DATABASE [pedidos] SET ANSI_NULL_DEFAULT OFF 
+GO
+ALTER DATABASE [pedidos] SET ANSI_NULLS OFF 
+GO
+ALTER DATABASE [pedidos] SET ANSI_PADDING OFF 
+GO
+ALTER DATABASE [pedidos] SET ANSI_WARNINGS OFF 
+GO
+ALTER DATABASE [pedidos] SET ARITHABORT OFF 
+GO
+ALTER DATABASE [pedidos] SET AUTO_CLOSE OFF 
+GO
+ALTER DATABASE [pedidos] SET AUTO_CREATE_STATISTICS ON 
+GO
+ALTER DATABASE [pedidos] SET AUTO_SHRINK OFF 
+GO
+ALTER DATABASE [pedidos] SET AUTO_UPDATE_STATISTICS ON 
+GO
+ALTER DATABASE [pedidos] SET CURSOR_CLOSE_ON_COMMIT OFF 
+GO
+ALTER DATABASE [pedidos] SET CURSOR_DEFAULT  GLOBAL 
+GO
+ALTER DATABASE [pedidos] SET CONCAT_NULL_YIELDS_NULL OFF 
+GO
+ALTER DATABASE [pedidos] SET NUMERIC_ROUNDABORT OFF 
+GO
+ALTER DATABASE [pedidos] SET QUOTED_IDENTIFIER OFF 
+GO
+ALTER DATABASE [pedidos] SET RECURSIVE_TRIGGERS OFF 
+GO
+ALTER DATABASE [pedidos] SET  DISABLE_BROKER 
+GO
+ALTER DATABASE [pedidos] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
+GO
+ALTER DATABASE [pedidos] SET DATE_CORRELATION_OPTIMIZATION OFF 
+GO
+ALTER DATABASE [pedidos] SET TRUSTWORTHY OFF 
+GO
+ALTER DATABASE [pedidos] SET ALLOW_SNAPSHOT_ISOLATION OFF 
+GO
+ALTER DATABASE [pedidos] SET PARAMETERIZATION SIMPLE 
+GO
+ALTER DATABASE [pedidos] SET READ_COMMITTED_SNAPSHOT OFF 
+GO
+ALTER DATABASE [pedidos] SET HONOR_BROKER_PRIORITY OFF 
+GO
+ALTER DATABASE [pedidos] SET RECOVERY SIMPLE 
+GO
+ALTER DATABASE [pedidos] SET  MULTI_USER 
+GO
+ALTER DATABASE [pedidos] SET PAGE_VERIFY CHECKSUM  
+GO
+ALTER DATABASE [pedidos] SET DB_CHAINING OFF 
+GO
+ALTER DATABASE [pedidos] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
+GO
+ALTER DATABASE [pedidos] SET TARGET_RECOVERY_TIME = 0 SECONDS 
+GO
+USE [pedidos]
+GO
+/****** Object:  UserDefinedTableType [dbo].[DetallesPedidoType]    Script Date: 05/08/2024 18:18:46 ******/
+CREATE TYPE [dbo].[DetallesPedidoType] AS TABLE(
+	[ProductoId] [int] NULL,
+	[Cantidad] [int] NULL,
+	[PrecioUnitario] [decimal](10, 2) NULL
+)
+GO
+/****** Object:  StoredProcedure [dbo].[Cargar_Combo_Clientes]    Script Date: 05/08/2024 18:18:46 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE procedure [dbo].[Cargar_Combo_Clientes]
+as
+SELECT ClienteId, 
+       LTRIM(RTRIM(Nombre)) + ' ' + LTRIM(RTRIM(Apellido))
+FROM Clientes
+
+GO
+/****** Object:  StoredProcedure [dbo].[Cargar_Combo_Productos]    Script Date: 05/08/2024 18:18:46 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create procedure [dbo].[Cargar_Combo_Productos]
+as
+SELECT [ProductoId], 
+       LTRIM(RTRIM(Nombre)) 
+from productos
+GO
+/****** Object:  StoredProcedure [dbo].[Consultar_Precio]    Script Date: 05/08/2024 18:18:46 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create procedure [dbo].[Consultar_Precio]
+@Id_producto int
+
+as
+
+select Precio
+from productos
+where ProductoId=@Id_Producto
+GO
+/****** Object:  StoredProcedure [dbo].[InsertarPedido]    Script Date: 05/08/2024 18:18:46 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[InsertarPedido]
+    @ClienteId INT,
+    @Fecha DATETIME,
+    @Total DECIMAL(10, 2),
+    @PedidoId INT OUTPUT
+AS
+BEGIN
+    INSERT INTO Pedidos (ClienteId, Fecha, Total)
+    VALUES (@ClienteId, @Fecha, @Total);
+    
+    -- Obtener el ID del pedido recién insertado
+    SET @PedidoId = SCOPE_IDENTITY();
+END;
+
+GO
+/****** Object:  StoredProcedure [dbo].[InsertarPedidoCompleto]    Script Date: 05/08/2024 18:18:46 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE  PROCEDURE [dbo].[InsertarPedidoCompleto]
+  @ClienteId INT,
+    @Fecha DATETIME,
+    @Total DECIMAL(10, 2),
+    @Detalles DetallesPedidoType READONLY
+AS
+BEGIN
+    DECLARE @PedidoId INT;
+    -- Insertar el pedido principal
+    EXEC InsertarPedido @ClienteId, @Fecha, @Total, @PedidoId OUTPUT;
+    -- Insertar los detalles del pedido
+    INSERT INTO DetallesPedido (PedidoId, ProductoId, Cantidad, PrecioUnitario)
+    SELECT @PedidoId, ProductoId, Cantidad, PrecioUnitario
+    FROM @Detalles;
+    -- Devolver el ID del pedido creado
+    SELECT @PedidoId AS PedidoId;
+END;
+
+GO
+/****** Object:  Table [dbo].[Clientes]    Script Date: 05/08/2024 18:18:46 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Clientes](
+	[ClienteId] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [nchar](100) NULL,
+	[Apellido] [nvarchar](100) NULL,
+	[Email] [nvarchar](100) NULL,
+	[Telefono] [nvarchar](20) NULL,
+	[Direccion] [nchar](200) NULL,
+	[FechaRegistro] [datetime] NULL,
+ CONSTRAINT [PK__Clientes__71ABD087110BDD09] PRIMARY KEY CLUSTERED 
+(
+	[ClienteId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[DetallesPedido]    Script Date: 05/08/2024 18:18:46 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[DetallesPedido](
+	[DetalleId] [int] IDENTITY(1,1) NOT NULL,
+	[PedidoId] [int] NOT NULL,
+	[ProductoId] [int] NOT NULL,
+	[Cantidad] [int] NOT NULL,
+	[PrecioUnitario] [decimal](10, 2) NOT NULL,
+ CONSTRAINT [PK__Detalles__6E19D6DA7F318E48] PRIMARY KEY CLUSTERED 
+(
+	[DetalleId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Pedidos]    Script Date: 05/08/2024 18:18:46 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Pedidos](
+	[PedidoId] [int] IDENTITY(1,1) NOT NULL,
+	[ClienteId] [int] NULL,
+	[Fecha] [datetime] NULL,
+	[Total] [decimal](10, 2) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[PedidoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Productos]    Script Date: 05/08/2024 18:18:46 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Productos](
+	[ProductoId] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [nvarchar](100) NULL,
+	[Precio] [decimal](10, 2) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ProductoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET IDENTITY_INSERT [dbo].[Clientes] ON 
+
+INSERT [dbo].[Clientes] ([ClienteId], [Nombre], [Apellido], [Email], [Telefono], [Direccion], [FechaRegistro]) VALUES (1, N'Juan                                                                                                ', N'Pérez', N'juan.perez@email.com', N'555-1234', N'Calle Principal 123, Ciudad A                                                                                                                                                                           ', NULL)
+INSERT [dbo].[Clientes] ([ClienteId], [Nombre], [Apellido], [Email], [Telefono], [Direccion], [FechaRegistro]) VALUES (2, N'María                                                                                               ', N'González', N'maria.gonzalez@email.com', N'555-5678', N'Avenida Central 456, Ciudad B                                                                                                                                                                           ', NULL)
+INSERT [dbo].[Clientes] ([ClienteId], [Nombre], [Apellido], [Email], [Telefono], [Direccion], [FechaRegistro]) VALUES (3, N'Carlos                                                                                              ', N'Rodríguez', N'carlos.rodriguez@email.com', N'555-9012', N'Plaza Mayor 789, Ciudad C                                                                                                                                                                               ', NULL)
+INSERT [dbo].[Clientes] ([ClienteId], [Nombre], [Apellido], [Email], [Telefono], [Direccion], [FechaRegistro]) VALUES (4, N'Ana                                                                                                 ', N'Martínez', N'ana.martinez@email.com', N'555-3456', N'Calle Secundaria 321, Ciudad D                                                                                                                                                                          ', NULL)
+INSERT [dbo].[Clientes] ([ClienteId], [Nombre], [Apellido], [Email], [Telefono], [Direccion], [FechaRegistro]) VALUES (5, N'Luis                                                                                                ', N'Sánchez', N'luis.sanchez@email.com', N'555-7890', N'Avenida Norte 654, Ciudad E                                                                                                                                                                             ', NULL)
+INSERT [dbo].[Clientes] ([ClienteId], [Nombre], [Apellido], [Email], [Telefono], [Direccion], [FechaRegistro]) VALUES (6, N'Laura                                                                                               ', N'Fernández', N'laura.fernandez@email.com', N'555-2345', N'Calle Sur 987, Ciudad F                                                                                                                                                                                 ', NULL)
+INSERT [dbo].[Clientes] ([ClienteId], [Nombre], [Apellido], [Email], [Telefono], [Direccion], [FechaRegistro]) VALUES (7, N'Pedro                                                                                               ', N'López', N'pedro.lopez@email.com', N'555-6789', N'Avenida Este 159, Ciudad G                                                                                                                                                                              ', NULL)
+INSERT [dbo].[Clientes] ([ClienteId], [Nombre], [Apellido], [Email], [Telefono], [Direccion], [FechaRegistro]) VALUES (8, N'Sofía                                                                                               ', N'Díaz', N'sofia.diaz@email.com', N'555-0123', N'Calle Oeste 753, Ciudad H                                                                                                                                                                               ', NULL)
+INSERT [dbo].[Clientes] ([ClienteId], [Nombre], [Apellido], [Email], [Telefono], [Direccion], [FechaRegistro]) VALUES (9, N'Miguel                                                                                              ', N'Torres', N'miguel.torres@email.com', N'555-4567', N'Plaza Central 246, Ciudad I                                                                                                                                                                             ', NULL)
+INSERT [dbo].[Clientes] ([ClienteId], [Nombre], [Apellido], [Email], [Telefono], [Direccion], [FechaRegistro]) VALUES (10, N'Elena                                                                                               ', N'Ruiz', N'elena.ruiz@email.com', N'555-8901', N'Avenida Principal 135, Ciudad J                                                                                                                                                                         ', NULL)
+SET IDENTITY_INSERT [dbo].[Clientes] OFF
+SET IDENTITY_INSERT [dbo].[DetallesPedido] ON 
+
+INSERT [dbo].[DetallesPedido] ([DetalleId], [PedidoId], [ProductoId], [Cantidad], [PrecioUnitario]) VALUES (19, 10, 18, 3, CAST(179.99 AS Decimal(10, 2)))
+INSERT [dbo].[DetallesPedido] ([DetalleId], [PedidoId], [ProductoId], [Cantidad], [PrecioUnitario]) VALUES (20, 10, 2, 1, CAST(1299.99 AS Decimal(10, 2)))
+INSERT [dbo].[DetallesPedido] ([DetalleId], [PedidoId], [ProductoId], [Cantidad], [PrecioUnitario]) VALUES (21, 11, 17, 1, CAST(89.99 AS Decimal(10, 2)))
+INSERT [dbo].[DetallesPedido] ([DetalleId], [PedidoId], [ProductoId], [Cantidad], [PrecioUnitario]) VALUES (22, 11, 14, 18, CAST(79.99 AS Decimal(10, 2)))
+INSERT [dbo].[DetallesPedido] ([DetalleId], [PedidoId], [ProductoId], [Cantidad], [PrecioUnitario]) VALUES (24, 12, 15, 1, CAST(599.99 AS Decimal(10, 2)))
+INSERT [dbo].[DetallesPedido] ([DetalleId], [PedidoId], [ProductoId], [Cantidad], [PrecioUnitario]) VALUES (25, 12, 15, 1, CAST(599.99 AS Decimal(10, 2)))
+INSERT [dbo].[DetallesPedido] ([DetalleId], [PedidoId], [ProductoId], [Cantidad], [PrecioUnitario]) VALUES (26, 13, 17, 2, CAST(89.99 AS Decimal(10, 2)))
+INSERT [dbo].[DetallesPedido] ([DetalleId], [PedidoId], [ProductoId], [Cantidad], [PrecioUnitario]) VALUES (27, 13, 7, 3, CAST(2499.99 AS Decimal(10, 2)))
+INSERT [dbo].[DetallesPedido] ([DetalleId], [PedidoId], [ProductoId], [Cantidad], [PrecioUnitario]) VALUES (28, 14, 11, 3, CAST(249.99 AS Decimal(10, 2)))
+INSERT [dbo].[DetallesPedido] ([DetalleId], [PedidoId], [ProductoId], [Cantidad], [PrecioUnitario]) VALUES (29, 14, 14, 1, CAST(79.99 AS Decimal(10, 2)))
+SET IDENTITY_INSERT [dbo].[DetallesPedido] OFF
+SET IDENTITY_INSERT [dbo].[Pedidos] ON 
+
+INSERT [dbo].[Pedidos] ([PedidoId], [ClienteId], [Fecha], [Total]) VALUES (10, 1, CAST(N'2024-08-01 00:00:00.000' AS DateTime), CAST(1839.96 AS Decimal(10, 2)))
+INSERT [dbo].[Pedidos] ([PedidoId], [ClienteId], [Fecha], [Total]) VALUES (11, 3, CAST(N'2024-08-01 00:00:00.000' AS DateTime), CAST(1529.81 AS Decimal(10, 2)))
+INSERT [dbo].[Pedidos] ([PedidoId], [ClienteId], [Fecha], [Total]) VALUES (12, 1, CAST(N'2024-08-01 00:00:00.000' AS DateTime), CAST(1199.98 AS Decimal(10, 2)))
+INSERT [dbo].[Pedidos] ([PedidoId], [ClienteId], [Fecha], [Total]) VALUES (13, 8, CAST(N'2024-08-05 00:00:00.000' AS DateTime), CAST(7679.95 AS Decimal(10, 2)))
+INSERT [dbo].[Pedidos] ([PedidoId], [ClienteId], [Fecha], [Total]) VALUES (14, 1, CAST(N'2024-08-05 00:00:00.000' AS DateTime), CAST(829.96 AS Decimal(10, 2)))
+SET IDENTITY_INSERT [dbo].[Pedidos] OFF
+SET IDENTITY_INSERT [dbo].[Productos] ON 
+
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (1, N'Smartphone Galaxy S21', CAST(799.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (2, N'Laptop Dell XPS 13', CAST(1299.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (3, N'Televisor LG OLED 55"', CAST(1499.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (4, N'Auriculares Sony WH-1000XM4', CAST(349.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (5, N'Tablet iPad Air', CAST(599.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (6, N'Consola PlayStation 5', CAST(499.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (7, N'Cámara Canon EOS R6', CAST(2499.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (8, N'Smartwatch Apple Watch Series 7', CAST(399.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (9, N'Altavoz Bluetooth JBL Flip 5', CAST(119.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (10, N'Monitor Gaming ASUS 27" 144Hz', CAST(299.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (11, N'Teclado mecánico Logitech G915', CAST(249.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (12, N'Ratón gaming Razer DeathAdder V2', CAST(69.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (13, N'Impresora multifunción HP OfficeJet Pro', CAST(199.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (14, N'Disco duro externo WD 2TB', CAST(79.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (15, N'Tarjeta gráfica NVIDIA RTX 3070', CAST(599.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (16, N'Procesador Intel Core i7-11700K', CAST(399.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (17, N'Memoria RAM Corsair Vengeance 16GB', CAST(89.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (18, N'SSD Samsung 970 EVO Plus 1TB', CAST(179.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (19, N'Router WiFi 6 NETGEAR Nighthawk', CAST(299.99 AS Decimal(10, 2)))
+INSERT [dbo].[Productos] ([ProductoId], [Nombre], [Precio]) VALUES (20, N'Webcam Logitech C920', CAST(79.99 AS Decimal(10, 2)))
+SET IDENTITY_INSERT [dbo].[Productos] OFF
+ALTER TABLE [dbo].[DetallesPedido]  WITH CHECK ADD  CONSTRAINT [FK__DetallesP__Pedid__173876EA] FOREIGN KEY([PedidoId])
+REFERENCES [dbo].[Pedidos] ([PedidoId])
+GO
+ALTER TABLE [dbo].[DetallesPedido] CHECK CONSTRAINT [FK__DetallesP__Pedid__173876EA]
+GO
+ALTER TABLE [dbo].[DetallesPedido]  WITH CHECK ADD  CONSTRAINT [FK__DetallesP__Produ__182C9B23] FOREIGN KEY([ProductoId])
+REFERENCES [dbo].[Productos] ([ProductoId])
+GO
+ALTER TABLE [dbo].[DetallesPedido] CHECK CONSTRAINT [FK__DetallesP__Produ__182C9B23]
+GO
+ALTER TABLE [dbo].[Pedidos]  WITH CHECK ADD  CONSTRAINT [FK__Pedidos__Cliente__145C0A3F] FOREIGN KEY([ClienteId])
+REFERENCES [dbo].[Clientes] ([ClienteId])
+GO
+ALTER TABLE [dbo].[Pedidos] CHECK CONSTRAINT [FK__Pedidos__Cliente__145C0A3F]
+GO
+USE [master]
+GO
+ALTER DATABASE [pedidos] SET  READ_WRITE 
+GO

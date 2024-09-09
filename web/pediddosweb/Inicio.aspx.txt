@@ -1,0 +1,139 @@
+﻿Imports System.Data
+Imports AD_Pedidos
+
+Public Class Inicio
+    Inherits System.Web.UI.Page
+    Dim oDs As New DataSet
+    Dim o_Pedidos As New C_Pedidos
+    Public totalgeneral As Decimal = 0
+
+    Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
+        If Page.IsPostBack = False Then
+            cargar_combo()
+            cargar_combo_productos()
+            For i = 1 To 20
+                CboCantidad.Items.Add(i)
+            Next
+        End If
+
+    End Sub
+
+
+    Public Sub cargar_combo()
+        Dim o_Pedidos As New C_Pedidos
+
+        oDs = o_Pedidos.Cargar_Combo_Productos
+
+        With CboProducto
+            .DataSource = oDs.Tables(0)
+            .DataTextField = oDs.Tables(0).Columns(1).ToString
+            .DataValueField = oDs.Tables(0).Columns(0).ToString
+            .DataBind()
+        End With
+    End Sub
+    Public Sub cargar_combo_productos()
+        Dim o_Pedidos As New C_Pedidos
+
+        oDs = o_Pedidos.Cargar_Combo
+
+        With cboCliente
+            .DataSource = oDs.Tables(0)
+            .DataTextField = oDs.Tables(0).Columns(1).ToString
+            .DataValueField = oDs.Tables(0).Columns(0).ToString
+            .DataBind()
+        End With
+    End Sub
+
+    Protected Sub CboProducto_SelectedIndexChanged(sender As Object, e As EventArgs) Handles CboProducto.SelectedIndexChanged
+        oDs = New DataSet
+        o_Pedidos = New C_Pedidos
+
+        oDs = o_Pedidos.Consultar_Precio(CboProducto.SelectedValue)
+
+        txtPrecio.Text = oDs.Tables(0).Rows(0)(0).ToString()
+    End Sub
+    Private Property Pedido As DataTable
+        Get
+            If Session("Pedido") Is Nothing Then
+                Dim dt As New DataTable()
+                dt.Columns.Add("Producto", GetType(String))
+                dt.Columns.Add("Precio", GetType(Decimal))
+                dt.Columns.Add("Cantidad", GetType(Integer))
+                dt.Columns.Add("Total", GetType(Decimal))
+                Session("Pedido") = dt
+            End If
+            Return CType(Session("Pedido"), DataTable)
+        End Get
+        Set(value As DataTable)
+            Session("Pedido") = value
+        End Set
+    End Property
+    Protected Sub cboAceptar_Click(sender As Object, e As EventArgs) Handles cboAceptar.Click
+        Dim producto As String = CboProducto.SelectedItem.Text
+        Dim precio As Decimal = Decimal.Parse(txtPrecio.Text)
+        Dim cantidad As Integer = Integer.Parse(CboCantidad.SelectedValue)
+        Dim total As Decimal = precio * cantidad
+
+        ' Agregar los datos al DataTable
+        Dim dt As DataTable = Pedido
+        Dim dr As DataRow = dt.NewRow()
+        dr("Producto") = producto
+        dr("Precio") = precio
+        dr("Cantidad") = cantidad
+        dr("Total") = total
+        dt.Rows.Add(dr)
+        txtTotal.Text = totalgeneral
+        ' Actualizar la propiedad Pedido y la grilla
+        Pedido = dt
+        grdGrilla.DataSource = dt
+        grdGrilla.DataBind()
+        ActualizarTotalGeneral()
+
+    End Sub
+    Private Sub ActualizarTotalGeneral()
+        Dim totalGeneral As Decimal = 0
+
+        For Each row As DataRow In Pedido.Rows
+            totalGeneral += Convert.ToDecimal(row("Total"))
+        Next
+
+        txtTotal.Text = totalGeneral
+    End Sub
+
+    Protected Sub cmbGuardar_Click(sender As Object, e As EventArgs) Handles cmbGuardar.Click
+        Dim clienteId As Integer = Integer.Parse(cboCliente.SelectedValue)
+        Dim fecha As DateTime
+
+        If DateTime.TryParse(txtFecha.Text, fecha) Then
+            Dim detalles As DataTable = Pedido ' Aquí obtienes los detalles del pedido desde la propiedad Pedido
+            Dim total As Decimal = Convert.ToDecimal(txtTotal.Text)
+
+            Dim o_Pedidos As New C_Pedidos()
+            Dim resultado As Boolean = o_Pedidos.Guardar_Pedido(clienteId, fecha, total, detalles)
+
+            If resultado Then
+                ' Mostrar un mensaje de éxito y limpiar los controles
+                Response.Write("<script>alert('Pedido guardado exitosamente');</script>")
+                LimpiarControles()
+            Else
+                ' Mostrar un mensaje de error
+                Response.Write("<script>alert('Error al guardar el pedido');</script>")
+            End If
+        Else
+            ' Mostrar un mensaje de error si la fecha no es válida
+            Response.Write("<script>alert('Seleccione una fecha válida');</script>")
+        End If
+    End Sub
+
+    Private Sub LimpiarControles()
+        cboCliente.SelectedIndex = 0
+        CboProducto.SelectedIndex = 0
+        txtPrecio.Text = ""
+        CboCantidad.SelectedIndex = 0
+        Pedido.Clear()
+        grdGrilla.DataSource = Nothing
+        grdGrilla.DataBind()
+        txtTotal.Text = ""
+
+    End Sub
+End Class
