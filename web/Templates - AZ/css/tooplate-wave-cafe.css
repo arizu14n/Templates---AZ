@@ -332,6 +332,8 @@ h2 { margin-top: 0; }
     }
 
 
+
+
 .tm-form-control::-webkit-input-placeholder { color: white; } /* Edge */  
 .tm-form-control:-ms-input-placeholder { color: white; } /* Internet Explorer 10-11 */  
 .tm-form-control::placeholder { color: white; }

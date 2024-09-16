@@ -50,15 +50,6 @@ Partial Public Class index
     Protected WithEvents CboMesas As Global.System.Web.UI.WebControls.DropDownList
 
     '''<summary>
-    '''Control GriPedidos.
-    '''</summary>
-    '''<remarks>
-    '''Campo generado automáticamente.
-    '''Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
-    '''</remarks>
-    Protected WithEvents GriPedidos As Global.System.Web.UI.WebControls.GridView
-
-    '''<summary>
     '''Control contentCategorias.
     '''</summary>
     '''<remarks>

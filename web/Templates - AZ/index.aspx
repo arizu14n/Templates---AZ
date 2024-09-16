@@ -21,15 +21,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 
-  <%--  <script type="text/javascript">
-        function mostrarAlerta(titulo, texto, icono) {
-            Swal.fire({
-                title: titulo,
-                text: texto,
-                icon: icono
-            });
-        }
-    </script>--%>
+ 
 
 </head>
 <body>
@@ -90,14 +82,34 @@
                             <asp:TextBox id="txtPedidoNombre" name="txtPedidoNombre" Placeholder="Ingrese su Nombre" class="tm-form-control A-Pedido" runat="server"></asp:TextBox>
                             <asp:DropDownList class="tm-form-control A-Pedido" placeholder="Elija su mesa" id="CboMesas" runat="server"></asp:DropDownList>
 
-                            <asp:GridView id="GriPedidos" class="tm-form-control A-Pedido" runat="server"></asp:GridView>
+                           <table style="width: 100%; border:1px" id="tabla-pedidos" class="tm-black-bg tm-form-control A-Pedido">
+
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Total</th>
+            <th style="visibility:hidden">Nombre</th>
+            <th style="visibility:hidden">Mesa</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Las filas se agregarán dinámicamente aquí -->
+    </tbody>
+</table>
+
 
                             <ul>
                                 <li class="tm-btnpedido">
-                                    <a class="tm-pedido" id="btnAceptar">
+                                    <a class="tm-pedido" >
                                         <span>Total Pedido:    </span><i class="fas fa-dollar-sign tm-page-link-icon"></i><span id="totalPedido"></span>
-                                        <span>Aceptar </span>
+                                        <span> </span>
                                     </a>
+                                    <button id="btnAceptar" class="tm-form-trol btnAgrega" onclick="guardarPedido(); return false;">Aceptar</button>
+                                    <button id="btnPagar" class="tm-form-trol btnAgrega" onclick="guardarPedido(); return false;">Pagar</button>
+                                    <button id="btnCancelar" class="tm-form-trol btnAgrega" onclick="guardarPedido(); return false;">Cancelar</button>
                                 </li>
                             </ul>
                         </div>
@@ -334,33 +346,6 @@
 
         <script src="./Scripts/index.js"></script>
     </form>
-    <script type="text/javascript">
-    function inicializarEventos() {
-        console.log('Inicializando eventos');
-        document.addEventListener('click', function(e) {
-            console.log('Click detectado', e.target);
-            if (e.target && e.target.classList.contains('btn-agregar-producto')) {
-                console.log('Botón Agregar clickeado');
-                e.preventDefault();
-                var idProducto = e.target.getAttribute('data-id-producto');
-                var cantidad = document.getElementById('cant' + idProducto).value;
-                console.log('Agregando producto:', idProducto, 'cantidad:', cantidad);
-                agregarProductoAlPedido(idProducto, cantidad);
-            }
-        });
-    }
-
-    function agregarProductoAlPedido(idProducto, cantidad) {
-        console.log('Llamando a __doPostBack');
-        __doPostBack('AgregarProducto', idProducto + '|' + cantidad);
-    }
-
-    console.log('Script cargado');
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', inicializarEventos);
-    } else {
-        inicializarEventos();
-    }
-    </script>
+    
 </body>
 </html>

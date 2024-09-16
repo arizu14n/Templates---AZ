@@ -1,35 +1,5 @@
-﻿function inicializarEventos() {
-    // Delegación de eventos para los botones de agregar producto
-    document.addEventListener('click', function (e) {
-        if (e.target && e.target.classList.contains('btn-agregar-producto')) {
-            e.preventDefault();
-            var idProducto = e.target.getAttribute('data-id-producto');
-            var cantidad = document.getElementById('cant' + idProducto).value;
-            agregarProductoAlPedido(idProducto, cantidad);
-        }
-    });
-
-    // Evento para el botón Aceptar
-    var btnAceptar = document.getElementById('btnAceptar');
-    if (btnAceptar) {
-        btnAceptar.addEventListener('click', function (e) {
-            e.preventDefault();
-            __doPostBack('btnAceptar', '');
-        });
-    }
-}
-
-function agregarProductoAlPedido(idProducto, cantidad) {
-    // Aquí puedes hacer un postback o una llamada AJAX
-    __doPostBack('AgregarProducto', idProducto + '|' + cantidad);
-}
-
-if (window.addEventListener) {
-    window.addEventListener('load', inicializarEventos, false);
-} else if (window.attachEvent) {
-    window.attachEvent('onload', inicializarEventos);
-}
-
+﻿
+/*' Sweet Alert  '*/
 
 function mostrarAlerta(titulo, texto, icono) {
     Swal.fire({
@@ -104,20 +74,6 @@ $(document).ready(function () {
         $("#btnPedido").css("visibility", "visible")
     });
 
-    //$(document).on('click', '.btnAgrega', function (e) {
-    //    e.preventDefault(); // Prevenir el comportamiento por defecto del botón
-
-    //    var productoId = $(this).attr('id').replace('prod', '');
-    //    var cantidad = $('#cant' + productoId).val();
-    //    var precio = $('#prec' + productoId).text().replace('$ ', '');
-    //    var nombre = $(this).closest('.tm-list-item-text').find('.tm-list-item-name').contents().filter(function () {
-    //        return this.nodeType == 3;
-    //    }).text().trim();
-
-
-
-    //});
-
 
 
     /***************** Pages *****************/
@@ -174,7 +130,7 @@ $(document).ready(function () {
 });
 
 
-
+/*  Código de Ariel   */
 
 
 $('.tm-pedido').on('click', function (event) {
@@ -202,14 +158,146 @@ $('.tm-pedido').on('click', function (event) {
         });
 
         const spanText = $('#btnPedido span').text();
-        $('#btnPedido span').text(spanText === 'Hacer Pedido' ? 'Cancelar Pedido' : 'Hacer Pedido');
+        $('#btnPedido span').text(spanText === 'Hacer Pedido' ? 'Ocultar Pedido' : 'Hacer Pedido');
 
     }
 });
 
+  
 
+$(document).on('click', '.btn-agregar-producto', function (e) {
+    e.preventDefault();
 
+    // Validar que haya un nombre y una mesa seleccionada
+    var nombre = $('#txtPedidoNombre').val();
+    var mesa = $('#CboMesas').val();
 
+    if (nombre.trim() === '') {
+        Swal.fire({
+            icon: 'warning',
+            title: '¡Atención!',
+            text: 'Por favor, ingrese el nombre de la persona.',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
 
+    if (mesa === '' || mesa === null) {
+        Swal.fire({
+            icon: 'warning',
+            title: '¡Atención!',
+            text: 'Por favor, seleccione una mesa.',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
 
+    // Obtener los datos del producto
+    var idProducto = $(this).data('id-producto');
+    var cantidad = parseInt($('#cant' + idProducto).val(), 10);
+    var descripcionCompleta = $(this).closest('.tm-list-item-text').find('.tm-list-item-name').text().trim();
+    var precioTexto = $('#prec' + idProducto).text().replace('$', '').trim();
+    var precio = parseFloat(precioTexto.replace(',', '.'));
 
+    console.log('Descripción Completa:', descripcionCompleta);
+    console.log('Precio Texto:', precioTexto);
+    console.log('Precio:', precio);
+
+    if (isNaN(cantidad) || cantidad <= 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: '¡Atención!',
+            text: 'Por favor, ingrese una cantidad válida.',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+
+    if (isNaN(precio)) {
+        Swal.fire({
+            icon: 'warning',
+            title: '¡Atención!',
+            text: 'Precio inválido.',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+
+    // Extraer la descripción sin el precio
+    // Eliminamos cualquier texto que empiece con $ y que contenga dígitos y comas/puntos
+    var descripcion = descripcionCompleta.replace(/(\$[\d,.]+)/g, '').trim();
+    var total = (cantidad * precio).toFixed(2);
+
+    console.log('Descripción:', descripcion);
+    console.log('Total:', total);
+
+    // Agregar el producto a la tabla
+    agregarProductoATabla(idProducto, descripcion, cantidad, precio, total, nombre, mesa);
+
+    // Deshabilitar el campo de nombre hasta que se confirme el pedido
+    $('#txtPedidoNombre').prop('disabled', true);
+
+    // Llamada AJAX al servidor
+    $.ajax({
+        type: "POST",
+        url: "index.aspx/AgregarProducto",
+        data: JSON.stringify({
+            idProducto: idProducto,
+            descripcion: descripcion,
+            cantidad: cantidad,
+            precio: parseFloat(precio),
+            total: parseFloat(total),
+            nombre: nombre,
+            mesa: mesa
+        }),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (response) {
+            if (response.d) {
+                console.log('Producto agregado exitosamente.');
+            } else {
+                console.log('No se pudo agregar el producto.');
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error('Error: ' + error);
+        }
+    });
+});
+
+function agregarProductoATabla(idProducto, descripcion, cantidad, precio, total, nombre, mesa) {
+    var fila = `
+        <tr data-mesa="${mesa}">
+            <td>${idProducto}</td>
+            <td>${descripcion}</td>
+            <td>${cantidad}</td>
+            <td>${precio}</td>
+            <td>${total}</td>
+            <td style="visibility: hidden">${nombre}</td>
+            <td style="visibility: hidden">${mesa}</td>
+        </tr>
+    `;
+
+    $('#tabla-pedidos tbody').append(fila);
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Producto agregado',
+        text: `Producto ${descripcion} agregado a la mesa ${mesa}`,
+        confirmButtonText: 'OK'
+    });
+}
+
+$('#CboMesas').on('change', function () {
+    var mesaSeleccionada = $(this).val();
+
+    // Mostrar solo las filas correspondientes a la mesa seleccionada
+    $('#tabla-pedidos tbody tr').each(function () {
+        var mesaFila = $(this).data('mesa');
+        if (mesaFila == mesaSeleccionada) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+});
