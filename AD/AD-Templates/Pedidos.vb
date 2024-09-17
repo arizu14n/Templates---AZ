@@ -18,30 +18,42 @@ Public Class Pedidos
 
     End Sub
 
-    Public Function GuardarPedido(mesaId As Integer, nombrePersona As String, totalPedido As Decimal) As Integer
-        Dim numeroPedido As Integer = 0
+    'Public Function RegistrarPedido(ByVal idMesa As Integer, ByVal realizadoPor As String, ByVal importeTotal As Decimal, ByVal detalles As DataTable, ByRef idPedido As Integer) As Boolean
+    '    Try
+    '        Using conn As SqlConnection = DirectCast(o_Database.CreateConnection(), SqlConnection)
+    '            Using cmd As SqlCommand = New SqlCommand("RegistrarPedido", conn)
+    '                cmd.CommandType = CommandType.StoredProcedure
 
-        Dim sqlCommand As String = "INSERT INTO Pedidos (MesaId, NombrePersona, TotalPedido, FechaPedido) " &
-                                   "VALUES (@MesaId, @NombrePersona, @TotalPedido, @FechaPedido); " &
-                                   "SELECT SCOPE_IDENTITY();"
+    '                cmd.Parameters.AddWithValue("@ID_Mesa", idMesa)
+    '                cmd.Parameters.AddWithValue("@RealizadoPor", realizadoPor)
+    '                cmd.Parameters.AddWithValue("@ImporteTotal", importeTotal)
 
-        Dim dbCommand As DbCommand = o_Database.GetSqlStringCommand(sqlCommand)
+    '                ' Parámetro de tipo de dato de tabla
+    '                Dim paramDetalles As SqlParameter = New SqlParameter("@Detalles", SqlDbType.Structured)
+    '                paramDetalles.TypeName = "TipoDetallePedido"
+    '                paramDetalles.Value = detalles
+    '                cmd.Parameters.Add(paramDetalles)
 
-        o_Database.AddInParameter(dbCommand, "@MesaId", DbType.Int32, mesaId)
-        o_Database.AddInParameter(dbCommand, "@NombrePersona", DbType.String, nombrePersona)
-        o_Database.AddInParameter(dbCommand, "@TotalPedido", DbType.Decimal, totalPedido)
-        o_Database.AddInParameter(dbCommand, "@FechaPedido", DbType.DateTime, DateTime.Now)
+    '                ' Parámetro de salida
+    '                Dim paramIDPedido As SqlParameter = New SqlParameter("@ID_Pedido", SqlDbType.Int)
+    '                paramIDPedido.Direction = ParameterDirection.Output
+    '                cmd.Parameters.Add(paramIDPedido)
 
-        Try
-            numeroPedido = Convert.ToInt32(o_Database.ExecuteScalar(dbCommand))
-        Catch ex As Exception
-            ' Manejar la excepción según tus necesidades
-            ' Por ejemplo, podrías registrar el error en un log
-            Throw New Exception("Error al guardar el pedido", ex)
-        End Try
+    '                conn.Open()
+    '                cmd.ExecuteNonQuery()
 
-        Return numeroPedido
-    End Function
+    '                ' Obtener el ID del pedido
+    '                idPedido = Convert.ToInt32(paramIDPedido.Value)
+
+    '                Return True
+    '            End Using
+    '        End Using
+    '    Catch ex As Exception
+    '        ' Manejar excepción o registrar error
+    '        Return False
+    '    End Try
+    'End Function
+
 
 
 

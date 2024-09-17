@@ -127,6 +127,12 @@ $(document).ready(function () {
             $(this).addClass("fas fa-play");
         }
     });
+
+    var fecha = new Date();
+    var opciones = { year: 'numeric', month: 'numeric', day: 'numeric' };
+    var fechaTexto = 'Fecha Actual: ' + fecha.toLocaleDateString('es-AR', opciones);
+    $('#fechaActual').text(fechaTexto);
+
 });
 
 
@@ -140,7 +146,7 @@ $('.tm-pedido').on('click', function (event) {
     $('.tm-page-nav-item').addClass("display: none").toggle();
 
 
-    let mesasDisponibles = $("#CboMesas option").length;
+    var mesasDisponibles = $("#CboMesas option").length;
 
 
     if (mesasDisponibles === 0) {
@@ -163,7 +169,7 @@ $('.tm-pedido').on('click', function (event) {
     }
 });
 
-  
+$('#totalPedido').text('0.00');
 
 $(document).on('click', '.btn-agregar-producto', function (e) {
     e.preventDefault();
@@ -197,12 +203,9 @@ $(document).on('click', '.btn-agregar-producto', function (e) {
     var cantidad = parseInt($('#cant' + idProducto).val(), 10);
     var descripcionCompleta = $(this).closest('.tm-list-item-text').find('.tm-list-item-name').text().trim();
     var precioTexto = $('#prec' + idProducto).text().replace('$', '').trim();
-    var precio = parseFloat(precioTexto.replace(',', '.'));
+    var precio = parseFloat(precioTexto.replace(',', '.')).toFixed(2);
 
-    console.log('Descripción Completa:', descripcionCompleta);
-    console.log('Precio Texto:', precioTexto);
-    console.log('Precio:', precio);
-
+   
     if (isNaN(cantidad) || cantidad <= 0) {
         Swal.fire({
             icon: 'warning',
@@ -223,13 +226,10 @@ $(document).on('click', '.btn-agregar-producto', function (e) {
         return;
     }
 
-    // Extraer la descripción sin el precio
-    // Eliminamos cualquier texto que empiece con $ y que contenga dígitos y comas/puntos
+  
     var descripcion = descripcionCompleta.replace(/(\$[\d,.]+)/g, '').trim();
     var total = (cantidad * precio).toFixed(2);
 
-    console.log('Descripción:', descripcion);
-    console.log('Total:', total);
 
     // Agregar el producto a la tabla
     agregarProductoATabla(idProducto, descripcion, cantidad, precio, total, nombre, mesa);
@@ -266,6 +266,7 @@ $(document).on('click', '.btn-agregar-producto', function (e) {
 });
 
 function agregarProductoATabla(idProducto, descripcion, cantidad, precio, total, nombre, mesa) {
+    var existeProducto = $('#tabla-pedidos tbody tr[data-mesa="' + mesa + '"]').length > 0;
     var fila = `
         <tr data-mesa="${mesa}">
             <td>${idProducto}</td>
@@ -273,31 +274,122 @@ function agregarProductoATabla(idProducto, descripcion, cantidad, precio, total,
             <td>${cantidad}</td>
             <td>${precio}</td>
             <td>${total}</td>
-            <td style="visibility: hidden">${nombre}</td>
-            <td style="visibility: hidden">${mesa}</td>
+            <td style="display: none">${nombre}</td>
+            <td style="display: none">${mesa}</td>
         </tr>
     `;
 
     $('#tabla-pedidos tbody').append(fila);
+    if (!existeProducto) {
+        $('#txtPedidoNombre').prop('disabled', true);
+    }
+
+
+    // Actualizar el total de la mesa seleccionada
+    actualizarTotalPedido();
+    $('#btnAceptar').prop('disabled', false);
+    $('#btnCancelar').prop('disabled', false);
 
     Swal.fire({
         icon: 'success',
         title: 'Producto agregado',
-        text: `Producto ${descripcion} agregado a la mesa ${mesa}`,
+        text: `Producto: ${descripcion}, agregado a la mesa ${mesa}`,
         confirmButtonText: 'OK'
     });
 }
 
 $('#CboMesas').on('change', function () {
     var mesaSeleccionada = $(this).val();
+    var tieneProductos = false;
+    var nombreMesa = '';
 
-    // Mostrar solo las filas correspondientes a la mesa seleccionada
+    // Ocultar todas las filas al cambiar de mesa
+    $('#tabla-pedidos tbody tr').hide();
+
+    // Verificar si la mesa seleccionada tiene productos cargados
     $('#tabla-pedidos tbody tr').each(function () {
         var mesaFila = $(this).data('mesa');
+
         if (mesaFila == mesaSeleccionada) {
-            $(this).show();
-        } else {
-            $(this).hide();
+            $(this).show(); // Mostrar solo las filas de la mesa seleccionada
+            tieneProductos = true;
+            // Obtener el nombre de la mesa desde la columna oculta
+            nombreMesa = $(this).find('td:eq(5)').text();
+          
         }
     });
+
+    if (tieneProductos) {
+        // Si la mesa ya tiene productos, deshabilitar el campo y mostrar el nombre
+        $('#txtPedidoNombre').val(nombreMesa).prop('disabled', true);
+        $('#btnAceptar').prop('disabled', false);
+        $('#btnCancelar').prop('disabled', false);
+    } else {
+        // Si no tiene productos, habilitar el campo para ingresar un nuevo nombre
+        $('#txtPedidoNombre').val('').prop('disabled', false);
+        $('#btnAceptar').prop('disabled', true);
+        $('#btnCancelar').prop('disabled', true);
+    }
+
+    // Actualizar el total de la mesa seleccionada
+    actualizarTotalPedido();
 });
+
+function cancelarPedido() {
+    var mesaSeleccionada = $('#CboMesas').val(); // Obtener la mesa seleccionada
+
+    // Recorrer todas las filas de la tabla y eliminar las que pertenecen a la mesa seleccionada
+    $('#tabla-pedidos tbody tr').each(function () {
+        var mesaFila = $(this).data('mesa'); // Obtener el valor de la mesa en la fila
+        if (mesaFila == mesaSeleccionada) {
+            $(this).remove(); // Eliminar la fila si coincide con la mesa seleccionada
+        }
+    });
+    
+    // Actualizar el total del pedido a 0 para esa mesa
+    $('#totalPedido').text('0.00');
+
+    // Si es necesario, también habilitar nuevamente el campo de nombre del pedido si la mesa queda sin productos
+    
+    $('#txtPedidoNombre').val('').prop('disabled', false);
+    $('#btnAceptar').prop('disabled', true);
+    $('#btnCancelar').prop('disabled', true);
+   
+}
+
+
+
+function actualizarTotalPedido() {
+    var mesaSeleccionada = $('#CboMesas').val();
+    var totalPedido = 0;
+
+    // Recorrer las filas de la tabla y sumar el total de las filas visibles para la mesa seleccionada
+    $('#tabla-pedidos tbody tr').each(function () {
+        var mesaFila = $(this).data('mesa');
+
+        if (mesaFila == mesaSeleccionada) {
+            // Sumar la columna Total (asumiendo que el valor está en la 5ta columna - índice 4)
+            var totalFila = parseFloat($(this).find('td:eq(4)').text());
+
+            // Asegurarse de que el valor sea un número
+            if (!isNaN(totalFila)) {
+                totalPedido += totalFila;
+            }
+        }
+    });
+
+    // Actualizar el valor del control #totalPedido con el total calculado
+    $('#totalPedido').text(totalPedido.toFixed(2)); // Mostrar con 2 decimales
+}
+function aceptarPedido() {
+    $('#btnAceptar').prop('disabled', true);
+    $('#btnCancelar').prop('disabled', true);
+    $('#btnPagar').prop('disabled', false);
+}
+
+function pagarPedido() {
+    $('#btnAceptar').prop('disabled', true);
+    $('#btnCancelar').prop('disabled', true);
+    $('#btnPagar').prop('disabled', true);
+}
+

@@ -331,6 +331,67 @@ h2 { margin-top: 0; }
         background-color: #099;
     }
 
+#tabla-pedidos {
+    width: 100%; /* Define el ancho total de la tabla */
+    border-collapse: collapse; /* Para que las celdas no tengan separación */
+}
+
+    #tabla-pedidos th, #tabla-pedidos td {
+        text-align: center; /* Centra el texto dentro de las celdas */
+        padding: 5px; /* Añade algo de espacio interno */
+    }
+
+    #tabla-pedidos th {
+        background-color: rgba(0, 0, 0, 0.9); /* Color de fondo para el encabezado */
+        font-weight: bold;
+        
+    }
+
+    #tabla-pedidos td {
+        border: 1px solid #ddd; /* Añade bordes a las celdas */
+    }
+
+        /* Ancho fijo para las columnas visibles */
+        #tabla-pedidos th:nth-child(1),
+        #tabla-pedidos td:nth-child(1) {
+            width: 30px; /* Ancho fijo para la columna ID */
+        }
+
+        #tabla-pedidos th:nth-child(2),
+        #tabla-pedidos td:nth-child(2) {
+            width: 180px; /* Ancho fijo para la columna Producto */
+        }
+
+        #tabla-pedidos th:nth-child(3),
+        #tabla-pedidos td:nth-child(3) {
+            width: 80px; /* Ancho fijo para la columna Cantidad */
+        }
+
+        #tabla-pedidos th:nth-child(4),
+        #tabla-pedidos td:nth-child(4) {
+            width: 90px; /* Ancho fijo para la columna Precio */
+        }
+
+        #tabla-pedidos th:nth-child(5),
+        #tabla-pedidos td:nth-child(5) {
+            width: 100px; /* Ancho fijo para la columna Total */
+        }
+.tm-button-container {
+    display: flex;
+    justify-content: space-between; /* Distribuir uniformemente los botones */
+    align-items: center; /* Alinear los botones verticalmente */
+    gap: 10px; /* Espacio entre los botones */
+    width: 100%; /* Ocupar todo el ancho disponible */
+}
+
+    .tm-button-container button {
+        flex: 1; /* Hacer que todos los botones tengan el mismo ancho */
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        margin: 0 5px; /* Un pequeño margen entre los botones */
+        margin-bottom: 10px;
+    }
 
 
 
