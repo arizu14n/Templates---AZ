@@ -238,31 +238,31 @@ $(document).on('click', '.btn-agregar-producto', function (e) {
     $('#txtPedidoNombre').prop('disabled', true);
 
     // Llamada AJAX al servidor
-    $.ajax({
-        type: "POST",
-        url: "index.aspx/AgregarProducto",
-        data: JSON.stringify({
-            idProducto: idProducto,
-            descripcion: descripcion,
-            cantidad: cantidad,
-            precio: parseFloat(precio),
-            total: parseFloat(total),
-            nombre: nombre,
-            mesa: mesa
-        }),
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-        success: function (response) {
-            if (response.d) {
-                console.log('Producto agregado exitosamente.');
-            } else {
-                console.log('No se pudo agregar el producto.');
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error('Error: ' + error);
-        }
-    });
+    //$.ajax({
+    //    type: "POST",
+    //    url: "index.aspx/AgregarProducto",
+    //    data: JSON.stringify({
+    //        idProducto: idProducto,
+    //        descripcion: descripcion,
+    //        cantidad: cantidad,
+    //        precio: parseFloat(precio),
+    //        total: parseFloat(total),
+    //        nombre: nombre,
+    //        mesa: mesa
+    //    }),
+    //    contentType: "application/json; charset=utf-8",
+    //    dataType: "json",
+    //    success: function (response) {
+    //        if (response.d) {
+    //            console.log('Producto agregado exitosamente.');
+    //        } else {
+    //            console.log('No se pudo agregar el producto.');
+    //        }
+    //    },
+    //    error: function (xhr, status, error) {
+    //        console.error('Error: ' + error);
+    //    }
+    //});
 });
 
 function agregarProductoATabla(idProducto, descripcion, cantidad, precio, total, nombre, mesa) {
@@ -381,15 +381,54 @@ function actualizarTotalPedido() {
     // Actualizar el valor del control #totalPedido con el total calculado
     $('#totalPedido').text(totalPedido.toFixed(2)); // Mostrar con 2 decimales
 }
-function aceptarPedido() {
-    $('#btnAceptar').prop('disabled', true);
-    $('#btnCancelar').prop('disabled', true);
-    $('#btnPagar').prop('disabled', false);
-}
 
-function pagarPedido() {
-    $('#btnAceptar').prop('disabled', true);
-    $('#btnCancelar').prop('disabled', true);
-    $('#btnPagar').prop('disabled', true);
-}
 
+
+
+//function aceptarPedido() {
+   
+
+//    var detalles = [];
+
+//    $('#tabla-pedidos tbody tr').each(function () {
+//        var idProducto = $(this).find('td:eq(0)').text();
+//        var cantidad = $(this).find('td:eq(2)').text();
+//        var precio = $(this).find('td:eq(3)').text();
+
+//        detalles.push({
+//            ID_Producto: parseInt(idProducto),
+//            Cantidad: parseInt(cantidad),
+//            Precio: parseFloat(precio)
+//        });
+//    });
+
+//    // Obtener la mesa, nombre y fecha
+//    var mesa = $('#CboMesas').val();
+//    var nombre = $('#txtPedidoNombre').val();
+//    var fecha = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+
+
+//    // Llamada AJAX al servidor
+//    $.ajax({
+//        type: "POST",
+//        url: "index.aspx/GuardarPedidoCompleto",
+//        data: JSON.stringify({
+//            idMesa: parseInt(mesa),
+//            nombreCliente: nombre,
+//            fechaPedido: fecha,
+//            detalles: detalles
+//        }),
+//        contentType: "application/json; charset=utf-8",
+//        dataType: "json",
+//        success: function (response) {
+//            if (response.d) {
+//                Swal.fire('Pedido guardado correctamente.');
+//            } else {
+//                Swal.fire('Error al guardar el pedido.');
+//            }
+//        },
+//        error: function (xhr, status, error) {
+//            console.error('Error: ' + error);
+//        }
+//    });
+//};

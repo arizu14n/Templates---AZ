@@ -129,48 +129,28 @@ Public Class index
         End If
     End Sub
 
-    <System.Web.Services.WebMethod()>
-    Public Shared Function AgregarProducto(idProducto As Integer, descripcion As String, cantidad As Integer, precio As Decimal, total As Decimal, nombre As String, mesa As String) As Boolean
-        ' Obtener el pedido actual de la sesión
-        Dim pedido As Dictionary(Of String, List(Of Producto)) = CType(HttpContext.Current.Session("Pedido"), Dictionary(Of String, List(Of Producto)))
-
-        If pedido Is Nothing Then
-            pedido = New Dictionary(Of String, List(Of Producto))()
-        End If
-
-        ' Clave para identificar el pedido único (nombre + mesa)
-        Dim clavePedido As String = nombre & "_" & mesa
-
-        ' Verificar si el pedido ya existe en la sesión
-        If Not pedido.ContainsKey(clavePedido) Then
-            pedido(clavePedido) = New List(Of Producto)()
-        End If
-
-        ' Buscar si el producto ya está en el pedido
-        Dim productoExistente = pedido(clavePedido).FirstOrDefault(Function(p) p.ID_Producto = idProducto)
-
-        If productoExistente IsNot Nothing Then
-            ' Si el producto ya existe, actualizar la cantidad y total
-            productoExistente.Cantidad += cantidad
-            productoExistente.Total += total
-        Else
-            ' Si no existe, agregar un nuevo producto al pedido
-            pedido(clavePedido).Add(New Producto With {
-            .ID_Producto = idProducto,
-            .Descripcion = descripcion,
-            .Cantidad = cantidad,
-            .Precio = precio,
-            .Total = total
-        })
-        End If
-
-        ' Guardar el pedido actualizado en la sesión
-        HttpContext.Current.Session("Pedido") = pedido
-
-        Return True
-    End Function
 
 
+    'FUNCION DE ROMINA
+    Private Property Pedido As DataTable
+        Get
+            If Session("Pedido") Is Nothing Then
+                Dim dt As New DataTable()
+                dt.Columns.Add("ID", GetType(Integer))
+                dt.Columns.Add("Fecha", GetType(Date))
+                dt.Columns.Add("Nombre", GetType(String))
+                dt.Columns.Add("Producto", GetType(String))
+                dt.Columns.Add("Cantidad", GetType(Double))
+                dt.Columns.Add("Precio", GetType(Decimal))
+                dt.Columns.Add("Total", GetType(Decimal))
+                Session("Pedido") = dt
+            End If
+            Return CType(Session("Pedido"), DataTable)
+        End Get
+        Set(value As DataTable)
+            Session("Pedido") = value
+        End Set
+    End Property
 
 
 

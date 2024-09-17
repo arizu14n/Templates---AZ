@@ -109,9 +109,9 @@
                                         <span></span>
                                     </h3>
                                     <div class="tm-button-container">
-                                        <button id="btnAceptar" class="tm-form-trol btnAgrega" disabled onclick="aceptarPedido(); return false;">Aceptar</button>
-                                        <button id="btnPagar" class="tm-form-trol btnAgrega" disabled onclick="pagarPedido(); return false;">Pagar</button>
-                                       <button id="btnCancelar" class="tm-form-trol btnAgrega" disabled onclick="cancelarPedido(); return false;">Cancelar</button>
+                                        <button id="btnAceptar" class="tm-form-trol btnAgrega"  <%--onclick="aceptarPedido()"--%>>Aceptar</button>
+                                        <button id="btnPagar" class="tm-form-trol btnAgrega"  <%--onclick="pagarPedido()"--%>>Pagar</button>
+                                       <button id="btnCancelar" class="tm-form-trol btnAgrega"  onclick="cancelarPedido()">Cancelar</button>
 
                                     </div>
                                 </li>

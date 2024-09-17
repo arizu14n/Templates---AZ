@@ -18,43 +18,41 @@ Public Class Pedidos
 
     End Sub
 
-    'Public Function RegistrarPedido(ByVal idMesa As Integer, ByVal realizadoPor As String, ByVal importeTotal As Decimal, ByVal detalles As DataTable, ByRef idPedido As Integer) As Boolean
-    '    Try
-    '        Using conn As SqlConnection = DirectCast(o_Database.CreateConnection(), SqlConnection)
-    '            Using cmd As SqlCommand = New SqlCommand("RegistrarPedido", conn)
-    '                cmd.CommandType = CommandType.StoredProcedure
 
-    '                cmd.Parameters.AddWithValue("@ID_Mesa", idMesa)
-    '                cmd.Parameters.AddWithValue("@RealizadoPor", realizadoPor)
-    '                cmd.Parameters.AddWithValue("@ImporteTotal", importeTotal)
-
-    '                ' Parámetro de tipo de dato de tabla
-    '                Dim paramDetalles As SqlParameter = New SqlParameter("@Detalles", SqlDbType.Structured)
-    '                paramDetalles.TypeName = "TipoDetallePedido"
-    '                paramDetalles.Value = detalles
-    '                cmd.Parameters.Add(paramDetalles)
-
-    '                ' Parámetro de salida
-    '                Dim paramIDPedido As SqlParameter = New SqlParameter("@ID_Pedido", SqlDbType.Int)
-    '                paramIDPedido.Direction = ParameterDirection.Output
-    '                cmd.Parameters.Add(paramIDPedido)
-
-    '                conn.Open()
-    '                cmd.ExecuteNonQuery()
-
-    '                ' Obtener el ID del pedido
-    '                idPedido = Convert.ToInt32(paramIDPedido.Value)
-
-    '                Return True
-    '            End Using
-    '        End Using
-    '    Catch ex As Exception
-    '        ' Manejar excepción o registrar error
-    '        Return False
-    '    End Try
-    'End Function
+    Public Function Guardar_Pedido(ID_mesa As Integer, Nombre As String, fecha As DateTime, total As Decimal, detalles As DataTable) As Boolean
 
 
+        Using connection As DbConnection = o_Database.CreateConnection()
+            connection.Open()
+            ' Iniciar una transacción
+            Using transaction As SqlTransaction = connection.BeginTransaction()
+
+                ' Crear el comando para el procedimiento almacenado
+                Using command As New SqlCommand("InsertarPedidoCompleto", connection, transaction)
+                    command.CommandType = CommandType.StoredProcedure
+
+                    ' Agregar los parámetros al comando
+                    command.Parameters.Add(New SqlParameter("@ClienteId", SqlDbType.Int)).Value = Nombre
+                    command.Parameters.Add(New SqlParameter("@Fecha", SqlDbType.DateTime)).Value = fecha
+                    command.Parameters.Add(New SqlParameter("@Total", SqlDbType.Decimal)).Value = total
+
+                    ' Crear el parámetro para el tipo estructurado
+                    Dim detallesParam As New SqlParameter("@Detalles", SqlDbType.Structured)
+                    detallesParam.TypeName = "dbo.DetallesPedidoType"
+                    detallesParam.Value = detalles
+                    command.Parameters.Add(detallesParam)
+
+                    ' Ejecutar el comando
+                    command.ExecuteNonQuery()
+
+                    ' Confirmar la transacción
+                    transaction.Commit()
+                End Using
+            End Using
+        End Using
+        Return True
+
+    End Function
 
 
 
