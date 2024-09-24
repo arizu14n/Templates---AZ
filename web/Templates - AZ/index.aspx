@@ -21,14 +21,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 
- 
+
 
 </head>
 <body>
 
 
     <form id="form1" runat="server">
-            <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
+        <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
         <div class="tm-container">
             <div class="tm-row">
                 <!-- Site Header -->
@@ -40,7 +40,7 @@
                         </div>
                         <nav class="tm-site-nav">
                             <ul class="tm-site-nav-ul">
-                                <li class="tm-page-nav-item" >
+                                <li class="tm-page-nav-item">
                                     <a href="#drink" id="link-bebidas" class="tm-page-link active">
                                         <i class="fas fa-mug-hot tm-page-link-icon"></i>
                                         <span>Bebidas</span>
@@ -64,7 +64,7 @@
                                         <span>Contacto</span>
                                     </a>
                                 </li>
-                                <li class="tm-btnpedido" >
+                                <li class="tm-btnpedido">
                                     <a href="#pedido" class="tm-pedido" id="btnPedido">
                                         <i class="fas fa-list tm-page-link-icon"></i>
                                         <span>Hacer Pedido</span>
@@ -78,38 +78,50 @@
 
 
                         <%-- DIV PARA CARGAR LA GRILLA DEL PEDIDO  --%>
-                        <div id="pedido" class="tm-black-bg A-Pedido" >
-                            <asp:TextBox id="txtPedidoNombre" name="txtPedidoNombre" Placeholder="Ingrese su Nombre" class="tm-form-control A-Pedido" runat="server"></asp:TextBox>
-                            <asp:DropDownList class="tm-form-control A-Pedido" placeholder="Elija su mesa" id="CboMesas" runat="server"></asp:DropDownList>
+                        <div id="pedido" class="tm-black-bg A-Pedido">
+                            <label id="fechaActual" class="tm-form-label"></label>
+                            <asp:TextBox ID="txtPedidoNombre" name="txtPedidoNombre" Placeholder="Ingrese su Nombre" class="tm-form-control A-Pedido" runat="server"></asp:TextBox>
+                            <asp:DropDownList class="tm-form-control A-Pedido" placeholder="Elija su mesa" ID="CboMesas" runat="server"></asp:DropDownList>
 
-                           <table style="width: 100%; border:1px" id="tabla-pedidos" class="tm-black-bg tm-form-control A-Pedido">
+                            <table id="tabla-pedidos" class="tm-form-control A-Pedido">
 
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Producto</th>
-            <th>Cantidad</th>
-            <th>Precio</th>
-            <th>Total</th>
-            <th style="visibility:hidden">Nombre</th>
-            <th style="visibility:hidden">Mesa</th>
-        </tr>
-    </thead>
-    <tbody>
-        <!-- Las filas se agregarán dinámicamente aquí -->
-    </tbody>
-</table>
+                                <thead>
+                                    <tr>
+                                        <th>ID Producto</th>
+                                        <th>Descripción</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio</th>
+                                        <th>Total</th>
+                                        <th style="display: none">Nombre</th>
+                                        <th style="display: none">Mesa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Las filas se agregarán aquí dinámicamente -->
+                                </tbody>
+                            </table>
 
 
                             <ul>
-                                <li class="tm-btnpedido">
-                                    <a class="tm-pedido" >
+                                <li class="tm-btnpedido" style="list-style-type: none;">
+                                    <h3>
                                         <span>Total Pedido:    </span><i class="fas fa-dollar-sign tm-page-link-icon"></i><span id="totalPedido"></span>
-                                        <span> </span>
-                                    </a>
-                                    <button id="btnAceptar" class="tm-form-trol btnAgrega" onclick="guardarPedido(); return false;">Aceptar</button>
-                                    <button id="btnPagar" class="tm-form-trol btnAgrega" onclick="guardarPedido(); return false;">Pagar</button>
-                                    <button id="btnCancelar" class="tm-form-trol btnAgrega" onclick="guardarPedido(); return false;">Cancelar</button>
+                                        <span></span>
+                                    </h3>
+                                    <div class="tm-button-container">
+                          <asp:Button ID="btnAceptar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Aceptar" OnClick="btnEnviarPedido_Click" />
+
+
+                                       <asp:HiddenField ID="hdnPedidoJSON" runat="server" ClientIDMode="Static" />
+
+
+                                        <%--<button id="btnPagar" class="tm-form-trol btnAgrega" style="visibility: hidden" onclick="pagarPedido()">Pagar</button>--%>
+                                        <%--<button id="btnCancelar" class="tm-form-trol btnAgrega" onclick="cancelarPedido()">Cancelar</button>--%>
+                                        <asp:Button ID="btnCancelar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Cancelar" OnClientClick="cancelarPedido();" />
+
+                                        
+
+                                    </div>
                                 </li>
                             </ul>
                         </div>
@@ -169,6 +181,7 @@
                 </div>
 
 
+
                 <!-- Contacto -->
 
                 <div id="contact" class="tm-page-content">
@@ -198,6 +211,7 @@
                     </div>
                 </div>
 
+
             </div>
         </div>
         <footer class="tm-site-footer">
@@ -223,129 +237,9 @@
         </div>
 
         <script src="js/jquery-3.4.1.min.js"></script>
-        <%--<script>
-
-            function setVideoSize() {
-                const vidWidth = 1920;
-                const vidHeight = 1080;
-                const windowWidth = window.innerWidth;
-                const windowHeight = window.innerHeight;
-                const tempVidWidth = windowHeight * vidWidth / vidHeight;
-                const tempVidHeight = windowWidth * vidHeight / vidWidth;
-                const newVidWidth = tempVidWidth > windowWidth ? tempVidWidth : windowWidth;
-                const newVidHeight = tempVidHeight > windowHeight ? tempVidHeight : windowHeight;
-                const tmVideo = $('#tm-video');
-
-                tmVideo.css('width', newVidWidth);
-                tmVideo.css('height', newVidHeight);
-            }
-
-            function openTab(evt, id) {
-                $('.tm-tab-content').hide();
-                $('#' + id).show();
-                $('.tm-tab-link').removeClass('active');
-                $(evt.currentTarget).addClass('active');
-            }
-
-            function initPage() {
-                let pageId = location.hash;
-
-                if (pageId) {
-                    highlightMenu($(`.tm-page-link[href^="${pageId}"]`));
-                    showPage($(pageId));
-                }
-                else {
-                    pageId = $('.tm-page-link.active').attr('href');
-                    showPage($(pageId));
-                }
-            }
-
-            function highlightMenu(menuItem) {
-                $('.tm-page-link').removeClass('active');
-                menuItem.addClass('active');
-            }
-
-            function showPage(page) {
-                $('.tm-page-content').hide();
-                page.show();
-            }
-
-            $(document).ready(function () {
-
-                /***************** Pages *****************/
-
-                initPage();
-
-                $('.tm-page-link').click(function (event) {
-
-                    if (window.innerWidth > 991) {
-                        event.preventDefault();
-                    }
-
-                    highlightMenu($(event.currentTarget));
-                    showPage($(event.currentTarget.hash));
-                });
-
-
-                /***************** Tabs *******************/
-
-                $('.tm-tab-link').on('click', e => {
-                    e.preventDefault();
-                    openTab(e, $(e.target).data('id'));
-                });
-
-                $('.tm-tab-link.active').click(); // Open default tab
-
-
-                /************** Video background *********/
-
-                setVideoSize();
-
-                // Set video background size based on window size
-                let timeout;
-                window.onresize = function () {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(setVideoSize, 100);
-                };
-
-                // Play/Pause button for video background      
-                const btn = $("#tm-video-control-button");
-
-                btn.on("click", function (e) {
-                    const video = document.getElementById("tm-video");
-                    $(this).removeClass();
-
-                    if (video.paused) {
-                        video.play();
-                        $(this).addClass("fas fa-pause");
-                    } else {
-                        video.pause();
-                        $(this).addClass("fas fa-play");
-                    }
-                });
-            });
-
-        </script>--%>
-
-
-       <%-- <script>
-            $('.tm-pedido').on('click', function (event) {
-                event.preventDefault();
-
-                $('.A-Pedido').each(function () {
-                    const visibility = $(this).css('visibility');
-                    $(this).css('visibility', visibility === 'hidden' ? 'visible' : 'hidden');
-                });
-
-                const spanText = $('#btnPedido span').text();
-                $('#btnPedido span').text(spanText === 'Hacer Pedido' ? 'Cancelar Pedido' : 'Hacer Pedido');
-
-                
-            });
-        </script>--%>
 
         <script src="./Scripts/index.js"></script>
     </form>
-    
+
 </body>
 </html>

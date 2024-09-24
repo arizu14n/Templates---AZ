@@ -18,8 +18,13 @@ Public Class index
     Dim o_Esp As New Especiales
     Dim o_Usu As New Usuarios
 
+#Region "Carga Inicial"
+
 
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
+
+
+
         If Not IsPostBack Then
 
 
@@ -30,6 +35,24 @@ Public Class index
         End If
 
 
+
+    End Sub
+
+    Public Sub llenarComboMesas()
+
+        Dim o_Mesa As New Mesas
+        Dim oDs As New DataSet
+
+        oDs = o_Mesa.Mesas_ListasDisponibles
+        If oDs.Tables(0).Rows.Count > 0 Then
+            With CboMesas
+                .DataSource = oDs.Tables(0)
+                .DataTextField = oDs.Tables(0).Columns(1).ToString
+                .DataValueField = oDs.Tables(0).Columns(0).ToString
+                .DataBind()
+            End With
+
+        End If
 
     End Sub
 
@@ -129,50 +152,8 @@ Public Class index
         End If
     End Sub
 
-    <System.Web.Services.WebMethod()>
-    Public Shared Function AgregarProducto(idProducto As Integer, descripcion As String, cantidad As Integer, precio As Decimal, total As Decimal, nombre As String, mesa As String) As Boolean
-        ' Obtener el pedido actual de la sesión
-        Dim pedido As Dictionary(Of String, List(Of Producto)) = CType(HttpContext.Current.Session("Pedido"), Dictionary(Of String, List(Of Producto)))
 
-        If pedido Is Nothing Then
-            pedido = New Dictionary(Of String, List(Of Producto))()
-        End If
-
-        ' Clave para identificar el pedido único (nombre + mesa)
-        Dim clavePedido As String = nombre & "_" & mesa
-
-        ' Verificar si el pedido ya existe en la sesión
-        If Not pedido.ContainsKey(clavePedido) Then
-            pedido(clavePedido) = New List(Of Producto)()
-        End If
-
-        ' Buscar si el producto ya está en el pedido
-        Dim productoExistente = pedido(clavePedido).FirstOrDefault(Function(p) p.ID_Producto = idProducto)
-
-        If productoExistente IsNot Nothing Then
-            ' Si el producto ya existe, actualizar la cantidad y total
-            productoExistente.Cantidad += cantidad
-            productoExistente.Total += total
-        Else
-            ' Si no existe, agregar un nuevo producto al pedido
-            pedido(clavePedido).Add(New Producto With {
-            .ID_Producto = idProducto,
-            .Descripcion = descripcion,
-            .Cantidad = cantidad,
-            .Precio = precio,
-            .Total = total
-        })
-        End If
-
-        ' Guardar el pedido actualizado en la sesión
-        HttpContext.Current.Session("Pedido") = pedido
-
-        Return True
-    End Function
-
-
-
-
+#End Region
 
 
 #Region "Formulario de Contacto"
@@ -197,37 +178,103 @@ Public Class index
 
 #End Region
 
-    Public Sub llenarComboMesas()
 
-        Dim o_Mesa As New Mesas
-        Dim oDs As New DataSet
-
-        oDs = o_Mesa.Mesas_ListasDisponibles
-        If oDs.Tables(0).Rows.Count > 0 Then
-            With CboMesas
-                .DataSource = oDs.Tables(0)
-                .DataTextField = oDs.Tables(0).Columns(1).ToString
-                .DataValueField = oDs.Tables(0).Columns(0).ToString
-                .DataBind()
-            End With
-
+    Protected Sub btnEnviarPedido_Click(sender As Object, e As EventArgs)
+        Dim pedidoJSON As String = hdnPedidoJSON.Value
+        If Not String.IsNullOrEmpty(pedidoJSON) Then
+            If RegistrarPedido(pedidoJSON) Then
+                ' Pedido registrado exitosamente
+                Dim script As String = "mostrarAlerta('Pedido Registrado', 'Tu pedido ha sido registrado correctamente', 'success');"
+                ClientScript.RegisterStartupScript(Me.GetType(), "SweetAlertScript", script, True)
+                ' Limpiar el pedido actual
+                hdnPedidoJSON.Value = ""
+            Else
+                ' Error al registrar el pedido
+                Dim script As String = "mostrarAlerta('Error', 'Hubo un problema al registrar tu pedido', 'error');"
+                ClientScript.RegisterStartupScript(Me.GetType(), "SweetAlertScript", script, True)
+            End If
+        Else
+            ' No hay pedido para enviar
+            Dim script As String = "mostrarAlerta('Pedido Vacío', 'No hay items en tu pedido', 'warning');"
+            ClientScript.RegisterStartupScript(Me.GetType(), "SweetAlertScript", script, True)
         End If
-
     End Sub
 
+    Private Function RegistrarPedido(pedidoJSON As String) As Boolean
+        Try
+            Dim pedido As Pedido = JsonConvert.DeserializeObject(Of Pedido)(pedidoJSON)
+
+            Using conn As New SqlConnection(ConfigurationManager.ConnectionStrings("MiConexion").ConnectionString)
+                conn.Open()
+                Using transaction As SqlTransaction = conn.BeginTransaction()
+                    Try
+                        ' Insertar en PedidosEncabezado
+                        Dim idPedido As Integer = InsertarPedidoEncabezado(pedido, conn, transaction)
+
+                        ' Insertar en PedidosDetalle
+                        InsertarPedidoDetalle(idPedido, pedido.Productos, conn, transaction)
+
+                        transaction.Commit()
+                        Return True
+                    Catch ex As Exception
+                        transaction.Rollback()
+                        Throw
+                    End Try
+                End Using
+            End Using
+        Catch ex As Exception
+            ' Registrar el error
+            ' TODO: Implementar logging adecuado
+            Return False
+        End Try
+    End Function
 
 
+    Private Shared Function InsertarPedidoEncabezado(pedido As Pedido, conn As SqlConnection, transaction As SqlTransaction) As Integer
+        Dim sql As String = "INSERT INTO PedidosEncabezado (ID_Mesa, FechaPedido, RealizadoPor, ImporteTotal, Estado) " &
+                            "VALUES (@ID_Mesa, @FechaPedido, @RealizadoPor, @ImporteTotal, @Estado); " &
+                            "SELECT SCOPE_IDENTITY();"
 
+        Using cmd As New SqlCommand(sql, conn, transaction)
+            cmd.Parameters.AddWithValue("@ID_Mesa", pedido.ID_Mesa)
+            cmd.Parameters.AddWithValue("@FechaPedido", DateTime.Now)
+            cmd.Parameters.AddWithValue("@RealizadoPor", pedido.RealizadoPor)
+            cmd.Parameters.AddWithValue("@ImporteTotal", pedido.ImporteTotal)
+            cmd.Parameters.AddWithValue("@Estado", True)
 
+            Return Convert.ToInt32(cmd.ExecuteScalar())
+        End Using
+    End Function
+
+    Private Shared Sub InsertarPedidoDetalle(idPedido As Integer, productos As List(Of ProductoPedido), conn As SqlConnection, transaction As SqlTransaction)
+        Dim sql As String = "INSERT INTO PedidosDetalle (ID_Pedido, ID_Producto, Cantidad, Precio) " &
+                            "VALUES (@ID_Pedido, @ID_Producto, @Cantidad, @Precio)"
+
+        Using cmd As New SqlCommand(sql, conn, transaction)
+            For Each producto In productos
+                cmd.Parameters.Clear()
+                cmd.Parameters.AddWithValue("@ID_Pedido", idPedido)
+                cmd.Parameters.AddWithValue("@ID_Producto", producto.ID_Producto)
+                cmd.Parameters.AddWithValue("@Cantidad", producto.Cantidad)
+                cmd.Parameters.AddWithValue("@Precio", producto.Precio)
+                cmd.ExecuteNonQuery()
+            Next
+        End Using
+    End Sub
 End Class
-Public Class Producto
+
+Public Class Pedido
+    Public Property ID_Mesa As Integer
+    Public Property RealizadoPor As String
+    Public Property ImporteTotal As Decimal
+    Public Property Productos As List(Of ProductoPedido)
+End Class
+
+Public Class ProductoPedido
     Public Property ID_Producto As Integer
-    Public Property Descripcion As String
     Public Property Cantidad As Integer
     Public Property Precio As Decimal
-    Public Property Total As Decimal
 End Class
-
 
 
 
