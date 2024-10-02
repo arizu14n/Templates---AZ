@@ -13,37 +13,37 @@ Imports System.Data.Common
 Public Class Pedidos
 
     Dim o_Database As Database
+
     Public Sub New()
         o_Database = DatabaseFactory.CreateDatabase("Conn")
 
     End Sub
 
-    Public Function GuardarPedido(mesaId As Integer, nombrePersona As String, totalPedido As Decimal) As Integer
-        Dim numeroPedido As Integer = 0
 
-        Dim sqlCommand As String = "INSERT INTO Pedidos (MesaId, NombrePersona, TotalPedido, FechaPedido) " &
-                                   "VALUES (@MesaId, @NombrePersona, @TotalPedido, @FechaPedido); " &
-                                   "SELECT SCOPE_IDENTITY();"
-
-        Dim dbCommand As DbCommand = o_Database.GetSqlStringCommand(sqlCommand)
-
-        o_Database.AddInParameter(dbCommand, "@MesaId", DbType.Int32, mesaId)
-        o_Database.AddInParameter(dbCommand, "@NombrePersona", DbType.String, nombrePersona)
-        o_Database.AddInParameter(dbCommand, "@TotalPedido", DbType.Decimal, totalPedido)
-        o_Database.AddInParameter(dbCommand, "@FechaPedido", DbType.DateTime, DateTime.Now)
-
+    'Pedido_AgregarEncabezado. ASI SE LLAMA EL SP
+    Public Function Pedidos_AgregarEncabezado(idMesa As Integer, fechaPedido As Date, realizadoPor As String, importeTotal As Decimal, estado As Boolean, transaction As SqlTransaction) As Integer
         Try
-            numeroPedido = Convert.ToInt32(o_Database.ExecuteScalar(dbCommand))
-        Catch ex As Exception
-            ' Manejar la excepción según tus necesidades
-            ' Por ejemplo, podrías registrar el error en un log
-            Throw New Exception("Error al guardar el pedido", ex)
-        End Try
+            Return o_Database.ExecuteScalar("Pedidos_AgregarEncabezado", idMesa, fechaPedido, realizadoPor, importeTotal, estado, transaction)
+        Catch ex As System.Exception
+            Throw ex
 
-        Return numeroPedido
+        End Try
+    End Function
+
+    'Pedidos_AgregarDetalle. ASI SE LLAMA EL SP
+
+    Public Function Pedidos_AgregarDetalle(idPedido As Integer, idProducto As Integer, cantidad As Integer, precio As Decimal, estado As Boolean, transaction As SqlTransaction) As Double
+        Try
+            Return o_Database.ExecuteScalar("Pedidos_AgregarDetalle", idPedido, idProducto, cantidad, precio, estado, transaction)
+        Catch ex As System.Exception
+            Throw ex
+
+        End Try
     End Function
 
 
-
-
 End Class
+
+
+
+

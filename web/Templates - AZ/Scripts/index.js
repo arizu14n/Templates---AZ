@@ -128,19 +128,12 @@ $(document).ready(function () {
         }
     });
 
-    var hdnPedidoJSON = document.getElementById('hdnPedidoJSON');
+ 
 
-    if (!hdnPedidoJSON) {
-        console.error("El campo hdnPedidoJSON no se encuentra en el DOM.");
-        return;
-    }
-
-    $('#btnAceptar').on('click', function () {
-        enviarPedido();
-    });
-
+    
 
 });
+
 
 
 /*  Código de Ariel   */
@@ -154,7 +147,7 @@ $('#fechaActual').text(fechaTexto);
 
 $('.tm-pedido').on('click', function (event) {
 
-    event.preventDefault();
+    //event.preventDefault();
 
     $('.tm-page-nav-item').addClass("display: none").toggle();
 
@@ -185,7 +178,7 @@ $('.tm-pedido').on('click', function (event) {
 $('#totalPedido').text('0.00');
 
 $(document).on('click', '.btn-agregar-producto', function (e) {
-    e.preventDefault();
+    //e.preventDefault();
 
     // Validar que haya un nombre y una mesa seleccionada
     var nombre = $('#txtPedidoNombre').val();
@@ -254,7 +247,7 @@ $(document).on('click', '.btn-agregar-producto', function (e) {
 });
 
 function agregarProductoATabla(idProducto, descripcion, cantidad, precio, total, nombre, mesa) {
-    var existeProducto = $('#tabla-pedidos tbody tr[data-mesa="' + mesa + '"]').length > 0;
+    var existeProducto = $('#tablapedidos tbody tr[data-mesa="' + mesa + '"]').length > 0;
     var fila = `
         <tr data-mesa="${mesa}">
             <td>${idProducto}</td>
@@ -267,7 +260,7 @@ function agregarProductoATabla(idProducto, descripcion, cantidad, precio, total,
         </tr>
     `;
 
-    $('#tabla-pedidos tbody').append(fila);
+    $('#tablapedidos tbody').append(fila);
     if (!existeProducto) {
         $('#txtPedidoNombre').prop('disabled', true);
     }
@@ -286,16 +279,20 @@ function agregarProductoATabla(idProducto, descripcion, cantidad, precio, total,
     });
 }
 
+$(document).on('click', '#btnAceptar', function () {
+    console.log("Botón Aceptar fue clickeado");
+});
+
 $('#CboMesas').on('change', function () {
     var mesaSeleccionada = $(this).val();
     var tieneProductos = false;
     var nombreMesa = '';
 
     // Ocultar todas las filas al cambiar de mesa
-    $('#tabla-pedidos tbody tr').hide();
+    $('#tablapedidos tbody tr').hide();
 
     // Verificar si la mesa seleccionada tiene productos cargados
-    $('#tabla-pedidos tbody tr').each(function () {
+    $('#tablapedidos tbody tr').each(function () {
         var mesaFila = $(this).data('mesa');
 
         if (mesaFila == mesaSeleccionada) {
@@ -315,7 +312,7 @@ $('#CboMesas').on('change', function () {
     } else {
         // Si no tiene productos, habilitar el campo para ingresar un nuevo nombre
         $('#txtPedidoNombre').val('').prop('disabled', false);
-        $('#btnAceptar').prop('disabled', true);
+        //$('#btnAceptar').prop('disabled', true);
         $('#btnCancelar').prop('disabled', true);
     }
 
@@ -327,7 +324,7 @@ function cancelarPedido() {
     var mesaSeleccionada = $('#CboMesas').val(); // Obtener la mesa seleccionada
 
     // Recorrer todas las filas de la tabla y eliminar las que pertenecen a la mesa seleccionada
-    $('#tabla-pedidos tbody tr').each(function () {
+    $('#tablapedidos tbody tr').each(function () {
         var mesaFila = $(this).data('mesa'); // Obtener el valor de la mesa en la fila
         if (mesaFila == mesaSeleccionada) {
             $(this).remove(); // Eliminar la fila si coincide con la mesa seleccionada
@@ -340,7 +337,7 @@ function cancelarPedido() {
     // Si es necesario, también habilitar nuevamente el campo de nombre del pedido si la mesa queda sin productos
 
     $('#txtPedidoNombre').val('').prop('disabled', false);
-    $('#btnAceptar').prop('disabled', true);
+    //$('#btnAceptar').prop('disabled', true);
     $('#btnCancelar').prop('disabled', true);
 
 }
@@ -352,7 +349,7 @@ function actualizarTotalPedido() {
     var totalPedido = 0;
 
     // Recorrer las filas de la tabla y sumar el total de las filas visibles para la mesa seleccionada
-    $('#tabla-pedidos tbody tr').each(function () {
+    $('#tablapedidos tbody tr').each(function () {
         var mesaFila = $(this).data('mesa');
 
         if (mesaFila == mesaSeleccionada) {
@@ -368,51 +365,7 @@ function actualizarTotalPedido() {
 
     // Actualizar el valor del control #totalPedido con el total calculado
     $('#totalPedido').text(totalPedido.toFixed(2)); // Mostrar con 2 decimales
+    $('#hdnTotalPedido').val(totalPedido.toFixed(2)); // Asegúrate de que este campo se actualice
+
 }
 
-
-function enviarPedido() {
-    // Asegúrate de que el campo hdnPedidoJSON esté en el DOM
-    var hdnPedidoJSON = document.getElementById('<%= hdnPedidoJSON.ClientID %>');
-
-    if (!hdnPedidoJSON) {
-        console.error("El campo hdnPedidoJSON no se encuentra en el DOM.");
-        return;
-    }
-
-    var productos = [];
-    var mesa = $('#CboMesas').val();
-    var nombre = $('#txtPedidoNombre').val();
-    var totalPedido = parseFloat($('#totalPedido').text());
-
-    // Recorrer todas las filas de la tabla para obtener los productos
-    $('#tabla-pedidos tbody tr').each(function () {
-        var idProducto = $(this).find('td').eq(0).text();
-        var cantidad = parseInt($(this).find('td').eq(2).text());
-        var precio = parseFloat($(this).find('td').eq(3).text());
-
-        productos.push({
-            ID_Producto: idProducto,
-            Cantidad: cantidad,
-            Precio: precio
-        });
-    });
-
-    // Crear el objeto de pedido
-    var pedido = {
-        ID_Mesa: mesa,
-        RealizadoPor: nombre,
-        ImporteTotal: totalPedido,
-        Productos: productos
-    };
-
-    // Convertir el objeto a JSON
-    var pedidoJSON = JSON.stringify(pedido);
-    console.log(pedidoJSON);
-
-    // Asignar el JSON al campo oculto
-    hdnPedidoJSON.value = pedidoJSON;
-    console.log('<%= hdnPedidoJSON.ClientID %>');
-    // Simular clic en el botón para enviar el pedido
-    document.getElementById('<%= btnEnviarPedido.ClientID %>').click();
-}

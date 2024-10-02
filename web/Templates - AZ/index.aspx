@@ -83,7 +83,7 @@
                             <asp:TextBox ID="txtPedidoNombre" name="txtPedidoNombre" Placeholder="Ingrese su Nombre" class="tm-form-control A-Pedido" runat="server"></asp:TextBox>
                             <asp:DropDownList class="tm-form-control A-Pedido" placeholder="Elija su mesa" ID="CboMesas" runat="server"></asp:DropDownList>
 
-                            <table id="tabla-pedidos" class="tm-form-control A-Pedido">
+                            <table id="tablapedidos" runat="server" class="tm-form-control A-Pedido">
 
                                 <thead>
                                     <tr>
@@ -108,18 +108,15 @@
                                         <span>Total Pedido:    </span><i class="fas fa-dollar-sign tm-page-link-icon"></i><span id="totalPedido"></span>
                                         <span></span>
                                     </h3>
+                                                                            <input type="hidden" id="hdnTotalPedido" runat="server" />
                                     <div class="tm-button-container">
-                          <asp:Button ID="btnAceptar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Aceptar" OnClick="btnEnviarPedido_Click" />
+                                        
+                                 
+                                     <asp:Button ID="btnAceptar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Aceptar" OnClick="AceptarPedido" />
 
 
-                                       <asp:HiddenField ID="hdnPedidoJSON" runat="server" ClientIDMode="Static" />
-
-
-                                        <%--<button id="btnPagar" class="tm-form-trol btnAgrega" style="visibility: hidden" onclick="pagarPedido()">Pagar</button>--%>
-                                        <%--<button id="btnCancelar" class="tm-form-trol btnAgrega" onclick="cancelarPedido()">Cancelar</button>--%>
                                         <asp:Button ID="btnCancelar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Cancelar" OnClientClick="cancelarPedido();" />
 
-                                        
 
                                     </div>
                                 </li>
@@ -128,6 +125,9 @@
 
                     </div>
                 </div>
+                
+
+                
                 <div class="tm-right">
 
                     <%--Menú BEBIDAS--%>

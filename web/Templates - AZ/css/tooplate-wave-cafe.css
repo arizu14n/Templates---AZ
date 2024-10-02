@@ -873,48 +873,48 @@ h2 {
         background-color: #099;
     }
 
-#tabla-pedidos {
+#tablapedidos {
     width: 100%; /* Define el ancho total de la tabla */
     border-collapse: collapse; /* Para que las celdas no tengan separación */
 }
 
-    #tabla-pedidos th, #tabla-pedidos td {
+    #tablapedidos th, #tablapedidos td {
         text-align: center; /* Centra el texto dentro de las celdas */
         padding: 5px; /* Añade algo de espacio interno */
     }
 
-    #tabla-pedidos th {
+    #tablapedidos th {
         background-color: rgba(0, 0, 0, 0.9); /* Color de fondo para el encabezado */
         font-weight: bold;
     }
 
-    #tabla-pedidos td {
+    #tablapedidos td {
         border: 1px solid #ddd; /* Añade bordes a las celdas */
     }
 
         /* Ancho fijo para las columnas visibles */
-        #tabla-pedidos th:nth-child(1),
-        #tabla-pedidos td:nth-child(1) {
+        #tablapedidos th:nth-child(1),
+        #tablapedidos td:nth-child(1) {
             width: 30px; /* Ancho fijo para la columna ID */
         }
 
-        #tabla-pedidos th:nth-child(2),
-        #tabla-pedidos td:nth-child(2) {
+        #tablapedidos th:nth-child(2),
+        #tablapedidos td:nth-child(2) {
             width: 180px; /* Ancho fijo para la columna Producto */
         }
 
-        #tabla-pedidos th:nth-child(3),
-        #tabla-pedidos td:nth-child(3) {
+        #tablapedidos th:nth-child(3),
+        #tablapedidos td:nth-child(3) {
             width: 80px; /* Ancho fijo para la columna Cantidad */
         }
 
-        #tabla-pedidos th:nth-child(4),
-        #tabla-pedidos td:nth-child(4) {
+        #tablapedidos th:nth-child(4),
+        #tablapedidos td:nth-child(4) {
             width: 90px; /* Ancho fijo para la columna Precio */
         }
 
-        #tabla-pedidos th:nth-child(5),
-        #tabla-pedidos td:nth-child(5) {
+        #tablapedidos th:nth-child(5),
+        #tablapedidos td:nth-child(5) {
             width: 100px; /* Ancho fijo para la columna Total */
         }
 

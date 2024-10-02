@@ -27,5 +27,16 @@ Public Class Mesas
         End Try
     End Function
 
+    Public Function Mesas_ModificarEstado(ID_Mesa As Integer, estado As Boolean)
+        Try
+            Return o_Database.ExecuteDataSet("Mesas_ModificarEstado", ID_Mesa, estado)
+        Catch ex As System.Exception
+            Throw ex
+
+        End Try
+    End Function
+
+
+
 
 End Class

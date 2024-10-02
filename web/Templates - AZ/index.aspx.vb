@@ -20,21 +20,15 @@ Public Class index
 
 #Region "Carga Inicial"
 
-
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
 
-
-
         If Not IsPostBack Then
-
 
             llenarCategoriasMenu()
             llenarMenuEspeciales()
             llenarComboMesas()
 
         End If
-
-
 
     End Sub
 
@@ -179,102 +173,94 @@ Public Class index
 #End Region
 
 
-    Protected Sub btnEnviarPedido_Click(sender As Object, e As EventArgs)
-        Dim pedidoJSON As String = hdnPedidoJSON.Value
-        If Not String.IsNullOrEmpty(pedidoJSON) Then
-            If RegistrarPedido(pedidoJSON) Then
-                ' Pedido registrado exitosamente
-                Dim script As String = "mostrarAlerta('Pedido Registrado', 'Tu pedido ha sido registrado correctamente', 'success');"
-                ClientScript.RegisterStartupScript(Me.GetType(), "SweetAlertScript", script, True)
-                ' Limpiar el pedido actual
-                hdnPedidoJSON.Value = ""
-            Else
-                ' Error al registrar el pedido
-                Dim script As String = "mostrarAlerta('Error', 'Hubo un problema al registrar tu pedido', 'error');"
-                ClientScript.RegisterStartupScript(Me.GetType(), "SweetAlertScript", script, True)
+#Region "Pedidos"
+    Protected Sub AceptarPedido(sender As Object, e As EventArgs) 'Handles btnAceptar.Click
+        ClientScript.RegisterStartupScript(Me.GetType(), "alert", "alert('El botón fue clickeado');", True)
+
+        ' Obtener los valores de los controles
+        Dim idMesa As Integer = Convert.ToInt32(CboMesas.SelectedValue) ' ID de la mesa seleccionada
+        Dim realizadoPor As String = txtPedidoNombre.Text ' Nombre ingresado
+        Dim importeTotal As Decimal = Convert.ToDecimal(hdnTotalPedido.Value) ' Total del pedido desde el campo oculto
+
+        ' Crear un DataTable para los detalles del pedido
+        Dim detallesPedido As New DataTable()
+        detallesPedido.Columns.Add("ID_Producto", GetType(Integer))
+        detallesPedido.Columns.Add("Cantidad", GetType(Integer))
+        detallesPedido.Columns.Add("Precio", GetType(Decimal))
+
+        ' Recorrer los productos recibidos desde la tabla dinámica
+        For Each row As GridViewRow In tablapedidos.Rows ' Cambia aquí para usar un control adecuado
+            If row.RowType = DataControlRowType.DataRow Then
+                Dim detalleRow As DataRow = detallesPedido.NewRow()
+                detalleRow("ID_Producto") = Convert.ToInt32(row.Cells(0).Text) ' Obtener ID del producto
+                detalleRow("Cantidad") = Convert.ToInt32(row.Cells(2).Text) ' Obtener cantidad
+                detalleRow("Precio") = Convert.ToDecimal(row.Cells(3).Text) ' Obtener precio
+                detallesPedido.Rows.Add(detalleRow)
             End If
+        Next
+
+        ' Llamar al método para guardar el pedido
+        Dim resultado As Boolean = GuardarPedido(idMesa, realizadoPor, importeTotal, detallesPedido)
+
+        ' Mensaje de éxito o error
+        If resultado Then
+            Response.Write("<script>alert('Pedido guardado exitosamente');</script>")
         Else
-            ' No hay pedido para enviar
-            Dim script As String = "mostrarAlerta('Pedido Vacío', 'No hay items en tu pedido', 'warning');"
-            ClientScript.RegisterStartupScript(Me.GetType(), "SweetAlertScript", script, True)
+            Response.Write("<script>alert('Error al guardar el pedido');</script>")
         End If
     End Sub
 
-    Private Function RegistrarPedido(pedidoJSON As String) As Boolean
-        Try
-            Dim pedido As Pedido = JsonConvert.DeserializeObject(Of Pedido)(pedidoJSON)
-
-            Using conn As New SqlConnection(ConfigurationManager.ConnectionStrings("MiConexion").ConnectionString)
-                conn.Open()
-                Using transaction As SqlTransaction = conn.BeginTransaction()
-                    Try
-                        ' Insertar en PedidosEncabezado
-                        Dim idPedido As Integer = InsertarPedidoEncabezado(pedido, conn, transaction)
-
-                        ' Insertar en PedidosDetalle
-                        InsertarPedidoDetalle(idPedido, pedido.Productos, conn, transaction)
-
-                        transaction.Commit()
-                        Return True
-                    Catch ex As Exception
-                        transaction.Rollback()
-                        Throw
-                    End Try
-                End Using
-            End Using
-        Catch ex As Exception
-            ' Registrar el error
-            ' TODO: Implementar logging adecuado
-            Return False
-        End Try
-    End Function
 
 
-    Private Shared Function InsertarPedidoEncabezado(pedido As Pedido, conn As SqlConnection, transaction As SqlTransaction) As Integer
-        Dim sql As String = "INSERT INTO PedidosEncabezado (ID_Mesa, FechaPedido, RealizadoPor, ImporteTotal, Estado) " &
-                            "VALUES (@ID_Mesa, @FechaPedido, @RealizadoPor, @ImporteTotal, @Estado); " &
-                            "SELECT SCOPE_IDENTITY();"
+    Protected Function GuardarPedido(idMesa As Integer, realizadoPor As String, importeTotal As Decimal, detallesPedido As DataTable) As Boolean
+        Dim oDs As New DataSet
+        Dim o_pedido As New Pedidos
+        Dim transaction As SqlTransaction ' Inicializa la variable para la transacción
+        Dim fechaPedido As Date = Now.Date
+        Dim estado As Boolean = True
 
-        Using cmd As New SqlCommand(sql, conn, transaction)
-            cmd.Parameters.AddWithValue("@ID_Mesa", pedido.ID_Mesa)
-            cmd.Parameters.AddWithValue("@FechaPedido", DateTime.Now)
-            cmd.Parameters.AddWithValue("@RealizadoPor", pedido.RealizadoPor)
-            cmd.Parameters.AddWithValue("@ImporteTotal", pedido.ImporteTotal)
-            cmd.Parameters.AddWithValue("@Estado", True)
+        Using conn As New SqlConnection("Conn") ' Asegúrate de tener la cadena de conexión
+            conn.Open()
+            transaction = conn.BeginTransaction()
 
-            Return Convert.ToInt32(cmd.ExecuteScalar())
+            Try
+                ' Insertar en la tabla pedidosEncabezado
+                Dim idPedido As Integer = o_pedido.Pedidos_AgregarEncabezado(idMesa, fechaPedido, realizadoPor, importeTotal, estado, transaction)
+
+                ' Insertar en la tabla pedidosDetalle
+                For Each row As DataRow In detallesPedido.Rows
+                    Dim idProducto As Integer = Convert.ToInt32(row("ID_Producto"))
+                    Dim cantidad As Integer = Convert.ToInt32(row("Cantidad"))
+                    Dim precio As Decimal = Convert.ToDecimal(row("Precio"))
+
+                    o_pedido.Pedidos_AgregarDetalle(idPedido, idProducto, cantidad, precio, estado, transaction)
+                Next
+
+                ' Confirmar la transacción
+                transaction.Commit()
+                Return True
+            Catch ex As Exception
+                ' Deshacer la transacción en caso de error
+                transaction.Rollback()
+                Return False
+            End Try
         End Using
     End Function
 
-    Private Shared Sub InsertarPedidoDetalle(idPedido As Integer, productos As List(Of ProductoPedido), conn As SqlConnection, transaction As SqlTransaction)
-        Dim sql As String = "INSERT INTO PedidosDetalle (ID_Pedido, ID_Producto, Cantidad, Precio) " &
-                            "VALUES (@ID_Pedido, @ID_Producto, @Cantidad, @Precio)"
 
-        Using cmd As New SqlCommand(sql, conn, transaction)
-            For Each producto In productos
-                cmd.Parameters.Clear()
-                cmd.Parameters.AddWithValue("@ID_Pedido", idPedido)
-                cmd.Parameters.AddWithValue("@ID_Producto", producto.ID_Producto)
-                cmd.Parameters.AddWithValue("@Cantidad", producto.Cantidad)
-                cmd.Parameters.AddWithValue("@Precio", producto.Precio)
-                cmd.ExecuteNonQuery()
-            Next
-        End Using
-    End Sub
+
+
+
+
 End Class
 
-Public Class Pedido
-    Public Property ID_Mesa As Integer
-    Public Property RealizadoPor As String
-    Public Property ImporteTotal As Decimal
-    Public Property Productos As List(Of ProductoPedido)
-End Class
 
-Public Class ProductoPedido
-    Public Property ID_Producto As Integer
-    Public Property Cantidad As Integer
-    Public Property Precio As Decimal
-End Class
+
+
+#End Region
+
+
+
 
 
 

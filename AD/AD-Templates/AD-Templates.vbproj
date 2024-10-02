@@ -60,6 +60,7 @@
       <HintPath>..\..\..\UTILES\UTILES\Microsoft.Practices.Unity.Interception.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
@@ -80,7 +81,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Categorias.vb" />
-    <Compile Include="DetallesPedido.vb" />
     <Compile Include="Especiales.vb" />
     <Compile Include="Mensajes_Contacto.vb" />
     <Compile Include="Mesas.vb" />
