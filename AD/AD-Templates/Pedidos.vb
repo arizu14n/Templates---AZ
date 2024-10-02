@@ -41,6 +41,44 @@ Public Class Pedidos
         End Try
     End Function
 
+    Public Function GuardarPedido(idMesa As Integer, realizadoPor As String, importeTotal As Decimal, detallesPedido As DataTable) As Boolean
+        Dim transaction As SqlTransaction = Nothing
+        Dim conn As SqlConnection = Nothing
+
+        Try
+            conn = DirectCast(o_Database.CreateConnection(), SqlConnection)
+            conn.Open()
+            transaction = conn.BeginTransaction()
+
+            ' Insertar en la tabla pedidosEncabezado
+            Dim fechaPedido As Date = Now.Date
+            Dim estado As Boolean = True
+            Dim idPedido As Integer = Pedidos_AgregarEncabezado(idMesa, fechaPedido, realizadoPor, importeTotal, estado, transaction)
+
+            ' Insertar en la tabla pedidosDetalle
+            For Each row As DataRow In detallesPedido.Rows
+                Dim idProducto As Integer = Convert.ToInt32(row("ID_Producto"))
+                Dim cantidad As Integer = Convert.ToInt32(row("Cantidad"))
+                Dim precio As Decimal = Convert.ToDecimal(row("Precio"))
+
+                Pedidos_AgregarDetalle(idPedido, idProducto, cantidad, precio, estado, transaction)
+            Next
+
+            ' Confirmar la transacción
+            transaction.Commit()
+            Return True
+        Catch ex As Exception
+            ' Deshacer la transacción en caso de error
+            If transaction IsNot Nothing Then
+                transaction.Rollback()
+            End If
+            Throw ex
+        Finally
+            If conn IsNot Nothing AndAlso conn.State = ConnectionState.Open Then
+                conn.Close()
+            End If
+        End Try
+    End Function
 
 End Class
 

@@ -128,14 +128,59 @@ $(document).ready(function () {
         }
     });
 
- 
+    $('#btnAceptar').on('click', function (e) {
+        e.preventDefault();
+        console.log("Botón Aceptar fue clickeado");
+
+        var pedidoData = recopilarDatosPedido();
+
+        $.ajax({
+            type: "POST",
+            url: "index.aspx/ProcesarPedido",
+            data: JSON.stringify({ pedido: pedidoData }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (response) {
+                console.log("Respuesta del servidor:", response.d);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Pedido procesado',
+                    text: response.d
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error("Error al enviar el pedido:", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Hubo un problema al procesar el pedido.'
+                });
+            }
+        });
+    });
 
     
 
 });
 
+function recopilarDatosPedido() {
+    var pedido = {
+        idMesa: $('#CboMesas').val(),
+        realizadoPor: $('#txtPedidoNombre').val(),
+        importeTotal: parseFloat($('#hdnTotalPedido').val()),
+        detalles: []
+    };
 
+    $('#tablapedidos tbody tr').each(function () {
+        pedido.detalles.push({
+            idProducto: $(this).find('td:eq(0)').text(),
+            cantidad: parseInt($(this).find('td:eq(2)').text()),
+            precio: parseFloat($(this).find('td:eq(3)').text())
+        });
+    });
 
+    return pedido;
+}
 /*  Código de Ariel   */
 
 var fecha = new Date();

@@ -8,6 +8,7 @@ Imports System.IO
 Imports AD_Templates.Productos
 Imports System.Web.Script.Services
 
+
 Public Class index
     Inherits System.Web.UI.Page
     Dim oDs As New DataSet
@@ -174,78 +175,122 @@ Public Class index
 
 
 #Region "Pedidos"
-    Protected Sub AceptarPedido(sender As Object, e As EventArgs) 'Handles btnAceptar.Click
-        ClientScript.RegisterStartupScript(Me.GetType(), "alert", "alert('El botón fue clickeado');", True)
-
-        ' Obtener los valores de los controles
-        Dim idMesa As Integer = Convert.ToInt32(CboMesas.SelectedValue) ' ID de la mesa seleccionada
-        Dim realizadoPor As String = txtPedidoNombre.Text ' Nombre ingresado
-        Dim importeTotal As Decimal = Convert.ToDecimal(hdnTotalPedido.Value) ' Total del pedido desde el campo oculto
-
-        ' Crear un DataTable para los detalles del pedido
-        Dim detallesPedido As New DataTable()
-        detallesPedido.Columns.Add("ID_Producto", GetType(Integer))
-        detallesPedido.Columns.Add("Cantidad", GetType(Integer))
-        detallesPedido.Columns.Add("Precio", GetType(Decimal))
-
-        ' Recorrer los productos recibidos desde la tabla dinámica
-        For Each row As GridViewRow In tablapedidos.Rows ' Cambia aquí para usar un control adecuado
-            If row.RowType = DataControlRowType.DataRow Then
-                Dim detalleRow As DataRow = detallesPedido.NewRow()
-                detalleRow("ID_Producto") = Convert.ToInt32(row.Cells(0).Text) ' Obtener ID del producto
-                detalleRow("Cantidad") = Convert.ToInt32(row.Cells(2).Text) ' Obtener cantidad
-                detalleRow("Precio") = Convert.ToDecimal(row.Cells(3).Text) ' Obtener precio
-                detallesPedido.Rows.Add(detalleRow)
-            End If
-        Next
-
-        ' Llamar al método para guardar el pedido
-        Dim resultado As Boolean = GuardarPedido(idMesa, realizadoPor, importeTotal, detallesPedido)
-
-        ' Mensaje de éxito o error
-        If resultado Then
-            Response.Write("<script>alert('Pedido guardado exitosamente');</script>")
-        Else
-            Response.Write("<script>alert('Error al guardar el pedido');</script>")
-        End If
-    End Sub
 
 
 
-    Protected Function GuardarPedido(idMesa As Integer, realizadoPor As String, importeTotal As Decimal, detallesPedido As DataTable) As Boolean
-        Dim oDs As New DataSet
+
+    <WebMethod()>
+    <ScriptMethod(ResponseFormat:=ResponseFormat.Json, UseHttpGet:=False)>
+    Public Shared Function ProcesarPedido(pedido As Object) As String
         Dim o_pedido As New Pedidos
         Dim transaction As SqlTransaction ' Inicializa la variable para la transacción
-        Dim fechaPedido As Date = Now.Date
-        Dim estado As Boolean = True
 
-        Using conn As New SqlConnection("Conn") ' Asegúrate de tener la cadena de conexión
-            conn.Open()
-            transaction = conn.BeginTransaction()
+        Try
+            ' Agregar logging para depuración
+            System.Diagnostics.Debug.WriteLine("ProcesarPedido llamado con: " & Newtonsoft.Json.JsonConvert.SerializeObject(pedido))
 
-            Try
-                ' Insertar en la tabla pedidosEncabezado
-                Dim idPedido As Integer = o_pedido.Pedidos_AgregarEncabezado(idMesa, fechaPedido, realizadoPor, importeTotal, estado, transaction)
+            Dim idMesa As Integer = CInt(pedido("idMesa"))
+            Dim realizadoPor As String = CStr(pedido("realizadoPor"))
+            Dim importeTotal As Decimal = CDec(pedido("importeTotal"))
 
-                ' Insertar en la tabla pedidosDetalle
-                For Each row As DataRow In detallesPedido.Rows
-                    Dim idProducto As Integer = Convert.ToInt32(row("ID_Producto"))
-                    Dim cantidad As Integer = Convert.ToInt32(row("Cantidad"))
-                    Dim precio As Decimal = Convert.ToDecimal(row("Precio"))
+            Dim detallesPedido As New DataTable()
+            detallesPedido.Columns.Add("ID_Producto", GetType(Integer))
+            detallesPedido.Columns.Add("Cantidad", GetType(Integer))
+            detallesPedido.Columns.Add("Precio", GetType(Decimal))
 
-                    o_pedido.Pedidos_AgregarDetalle(idPedido, idProducto, cantidad, precio, estado, transaction)
-                Next
+            For Each detalle As Object In DirectCast(pedido("detalles"), System.Collections.Generic.IEnumerable(Of Object))
+                detallesPedido.Rows.Add(
+                    CInt(detalle("idProducto")),
+                    CInt(detalle("cantidad")),
+                    CDec(detalle("precio"))
+                )
+            Next
 
-                ' Confirmar la transacción
-                transaction.Commit()
-                Return True
-            Catch ex As Exception
-                ' Deshacer la transacción en caso de error
-                transaction.Rollback()
-                Return False
-            End Try
-        End Using
+
+            Dim resultado As Boolean = o_pedido.GuardarPedido(idMesa, realizadoPor, importeTotal, detallesPedido)
+
+            If resultado Then
+                Return "Pedido guardado exitosamente"
+            Else
+                Return "Error al guardar el pedido"
+            End If
+        Catch ex As Exception
+            System.Diagnostics.Debug.WriteLine("Error en ProcesarPedido: " & ex.ToString())
+            Return "Error: " & ex.Message
+        End Try
     End Function
+
+    'Protected Sub AceptarPedido(sender As Object, e As EventArgs) 'Handles btnAceptar.Click
+    '    ClientScript.RegisterStartupScript(Me.GetType(), "alert", "alert('El botón fue clickeado');", True)
+
+    '    ' Obtener los valores de los controles
+    '    Dim idMesa As Integer = Convert.ToInt32(CboMesas.SelectedValue) ' ID de la mesa seleccionada
+    '    Dim realizadoPor As String = txtPedidoNombre.Text ' Nombre ingresado
+    '    Dim importeTotal As Decimal = Convert.ToDecimal(hdnTotalPedido.Value) ' Total del pedido desde el campo oculto
+
+    '    ' Crear un DataTable para los detalles del pedido
+    '    Dim detallesPedido As New DataTable()
+    '    detallesPedido.Columns.Add("ID_Producto", GetType(Integer))
+    '    detallesPedido.Columns.Add("Cantidad", GetType(Integer))
+    '    detallesPedido.Columns.Add("Precio", GetType(Decimal))
+
+    '    ' Recorrer los productos recibidos desde la tabla dinámica
+    '    For Each row As GridViewRow In tablapedidos.Rows ' Cambia aquí para usar un control adecuado
+    '        If row.RowType = DataControlRowType.DataRow Then
+    '            Dim detalleRow As DataRow = detallesPedido.NewRow()
+    '            detalleRow("ID_Producto") = Convert.ToInt32(row.Cells(0).Text) ' Obtener ID del producto
+    '            detalleRow("Cantidad") = Convert.ToInt32(row.Cells(2).Text) ' Obtener cantidad
+    '            detalleRow("Precio") = Convert.ToDecimal(row.Cells(3).Text) ' Obtener precio
+    '            detallesPedido.Rows.Add(detalleRow)
+    '        End If
+    '    Next
+
+    '    ' Llamar al método para guardar el pedido
+    '    Dim resultado As Boolean = GuardarPedido(idMesa, realizadoPor, importeTotal, detallesPedido)
+
+    '    ' Mensaje de éxito o error
+    '    If resultado Then
+    '        Response.Write("<script>alert('Pedido guardado exitosamente');</script>")
+    '    Else
+    '        Response.Write("<script>alert('Error al guardar el pedido');</script>")
+    '    End If
+    'End Sub
+
+
+
+    'Protected Function GuardarPedido(idMesa As Integer, realizadoPor As String, importeTotal As Decimal, detallesPedido As DataTable) As Boolean
+
+
+    '    Dim fechaPedido As Date = Now.Date
+    '    Dim estado As Boolean = True
+
+    '    Using conn As New SqlConnection("Conn") ' Asegúrate de tener la cadena de conexión
+    '        conn.Open()
+    '        transaction = conn.BeginTransaction()
+
+    '        Try
+    '            ' Insertar en la tabla pedidosEncabezado
+    '            Dim idPedido As Integer = o_pedido.Pedidos_AgregarEncabezado(idMesa, fechaPedido, realizadoPor, importeTotal, estado, transaction)
+
+    '            ' Insertar en la tabla pedidosDetalle
+    '            For Each row As DataRow In detallesPedido.Rows
+    '                Dim idProducto As Integer = Convert.ToInt32(row("ID_Producto"))
+    '                Dim cantidad As Integer = Convert.ToInt32(row("Cantidad"))
+    '                Dim precio As Decimal = Convert.ToDecimal(row("Precio"))
+
+    '                o_pedido.Pedidos_AgregarDetalle(idPedido, idProducto, cantidad, precio, estado, transaction)
+    '            Next
+
+    '            ' Confirmar la transacción
+    '            transaction.Commit()
+    '            Return True
+    '        Catch ex As Exception
+    '            ' Deshacer la transacción en caso de error
+    '            transaction.Rollback()
+    '            Return False
+    '        End Try
+    '    End Using
+    'End Function
 
 
 

@@ -112,8 +112,8 @@
                                     <div class="tm-button-container">
                                         
                                  
-                                     <asp:Button ID="btnAceptar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Aceptar" OnClick="AceptarPedido" />
-
+                                     <%--<asp:Button ID="btnAceptar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Aceptar" OnClick="AceptarPedido" />--%>
+                                        <asp:Button ID="btnAceptar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Aceptar" OnClientClick="return false;" />
 
                                         <asp:Button ID="btnCancelar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Cancelar" OnClientClick="cancelarPedido();" />
 
