@@ -50,42 +50,6 @@ Partial Public Class index
     Protected WithEvents CboMesas As Global.System.Web.UI.WebControls.DropDownList
 
     '''<summary>
-    '''Control tablapedidos.
-    '''</summary>
-    '''<remarks>
-    '''Campo generado automáticamente.
-    '''Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
-    '''</remarks>
-    Protected WithEvents tablapedidos As Global.System.Web.UI.HtmlControls.HtmlTable
-
-    '''<summary>
-    '''Control hdnTotalPedido.
-    '''</summary>
-    '''<remarks>
-    '''Campo generado automáticamente.
-    '''Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
-    '''</remarks>
-    Protected WithEvents hdnTotalPedido As Global.System.Web.UI.HtmlControls.HtmlInputHidden
-
-    '''<summary>
-    '''Control btnAceptar.
-    '''</summary>
-    '''<remarks>
-    '''Campo generado automáticamente.
-    '''Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
-    '''</remarks>
-    Protected WithEvents btnAceptar As Global.System.Web.UI.WebControls.Button
-
-    '''<summary>
-    '''Control btnCancelar.
-    '''</summary>
-    '''<remarks>
-    '''Campo generado automáticamente.
-    '''Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
-    '''</remarks>
-    Protected WithEvents btnCancelar As Global.System.Web.UI.WebControls.Button
-
-    '''<summary>
     '''Control contentCategorias.
     '''</summary>
     '''<remarks>
