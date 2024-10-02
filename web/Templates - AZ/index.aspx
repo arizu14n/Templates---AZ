@@ -106,19 +106,11 @@
                                 <li class="tm-btnpedido" style="list-style-type: none;">
                                     <h3>
                                         <span>Total Pedido:    </span><i class="fas fa-dollar-sign tm-page-link-icon"></i><span id="totalPedido"></span>
-                                        <span></span>
-                                    </h3>
-                                                                            <input type="hidden" id="hdnTotalPedido" runat="server" />
-                                    <div class="tm-button-container">
-                                        
-                                 
-                                     <%--<asp:Button ID="btnAceptar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Aceptar" OnClick="AceptarPedido" />--%>
-                                        <asp:Button ID="btnAceptar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Aceptar" OnClientClick="return false;" />
-
-                                        <asp:Button ID="btnCancelar" runat="server" CssClass="tm-form-trol btnAgrega" Text="Cancelar" OnClientClick="cancelarPedido();" />
-
-
-                                    </div>
+                                        <span> </span>
+                                    </a>
+                                    <button id="btnAceptar" class="tm-form-trol btnAgrega" onclick="guardarPedido(); return false;">Aceptar</button>
+                                    <button id="btnPagar" class="tm-form-trol btnAgrega" onclick="guardarPedido(); return false;">Pagar</button>
+                                    <button id="btnCancelar" class="tm-form-trol btnAgrega" onclick="guardarPedido(); return false;">Cancelar</button>
                                 </li>
                             </ul>
                         </div>

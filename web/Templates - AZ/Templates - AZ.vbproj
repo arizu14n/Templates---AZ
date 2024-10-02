@@ -193,6 +193,7 @@
     <Content Include="index.aspx" />
     <Content Include="js\jquery-3.4.1.min.js" />
     <Content Include="Login.aspx" />
+    <Content Include="Scripts\backOffice.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Scripts\index.js" />
